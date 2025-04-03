@@ -4,7 +4,6 @@ import funkin.backend.system.framerate.Framerate;
 import funkin.backend.system.GraphicCacheSprite;
 import funkin.backend.system.Controls;
 import funkin.backend.scripting.DummyScript;
-import flixel.FlxState;
 import flixel.FlxSubState;
 import funkin.backend.scripting.events.*;
 import funkin.backend.scripting.Script;
@@ -12,7 +11,6 @@ import funkin.backend.scripting.ScriptPack;
 import funkin.backend.system.interfaces.IBeatReceiver;
 import funkin.backend.system.Conductor;
 import funkin.options.PlayerSettings;
-
 /*
 @author of the code is sysource_xyz and HomuHomu of github images mobile.pngs (i rob sorry:(...)
 */
@@ -28,7 +26,10 @@ class MusicBeatSubstate extends FlxSubState implements IBeatReceiver {
     public static var instance:MusicBeatSubstate;
 
     #if TOUCH_CONTROLS
-    private var touchControls:TouchControlsHandler;
+    public var touchPad:TouchPad;
+    public var hitbox:Hitbox;
+    public var hboxCam:FlxCamera;
+    public var tpadCam:FlxCamera;
     #end
 
     private var lastBeat:Float = 0;
@@ -64,40 +65,94 @@ class MusicBeatSubstate extends FlxSubState implements IBeatReceiver {
         super();
         instance = this;
         this.scriptsAllowed = scriptsAllowed;
+    }
 
+    public function addTouchPad(DPad:String, Action:String):Void {
         #if TOUCH_CONTROLS
-        touchControls = new TouchControlsHandler();
+        touchPad = new TouchPad(DPad, Action);
+        add(touchPad);
         #end
     }
 
-    public function setupTouchControls(DPad:String, Action:String, ?defaultDrawTarget:Bool = false):Void {
+    public function removeTouchPad():Void {
         #if TOUCH_CONTROLS
-        touchControls.initialize(DPad, Action, defaultDrawTarget);
-        add(touchControls.getTouchPad());
-        add(touchControls.getHitbox());
+        if (touchPad != null) {
+            remove(touchPad);
+            touchPad = FlxDestroyUtil.destroy(touchPad);
+        }
+
+        if (tpadCam != null) {
+            FlxG.cameras.remove(tpadCam);
+            tpadCam = FlxDestroyUtil.destroy(tpadCam);
+        }
         #end
     }
 
-    public function clearTouchControls():Void {
+    public function addHitbox(?defaultDrawTarget:Bool = false):Void {
         #if TOUCH_CONTROLS
-        touchControls.cleanup();
+        hitbox = new Hitbox(Options.extraHints);
+
+        hboxCam = new FlxCamera();
+        hboxCam.bgColor.alpha = 0;
+        FlxG.cameras.add(hboxCam, defaultDrawTarget);
+
+        hitbox.cameras = [hboxCam];
+        hitbox.visible = false;
+        add(hitbox);
         #end
     }
 
-    public function updateTouchPadMode(DPadMode:String, ActionMode:String, ?addCamera:Bool = false):Void {
+    public function removeHitbox():Void {
         #if TOUCH_CONTROLS
-        touchControls.updateMode(DPadMode, ActionMode, addCamera);
+        if (hitbox != null) {
+            remove(hitbox);
+            hitbox = FlxDestroyUtil.destroy(hitbox);
+        }
+
+        if (hboxCam != null) {
+            FlxG.cameras.remove(hboxCam);
+            hboxCam = FlxDestroyUtil.destroy(hboxCam);
+        }
+        #end
+    }
+
+    public function addTouchPadCamera(?defaultDrawTarget:Bool = false):Void {
+        #if TOUCH_CONTROLS
+        if (touchPad != null) {
+            tpadCam = new FlxCamera();
+            tpadCam.bgColor.alpha = 0;
+            FlxG.cameras.add(tpadCam, defaultDrawTarget);
+            touchPad.cameras = [tpadCam];
+        }
+        #end
+    }
+
+    public function setTouchPadMode(DPadMode:String, ActionMode:String, ?addCamera:Bool = false):Void {
+        #if TOUCH_CONTROLS
+        if (touchPad == null) return;
+        removeTouchPad();
+        addTouchPad(DPadMode, ActionMode);
+        if (addCamera) {
+            addTouchPadCamera();
+        }
         #end
     }
 
     override function destroy():Void {
         #if TOUCH_CONTROLS
-        clearTouchControls();
+        removeTouchPad();
+        removeHitbox();
         #end
 
         super.destroy();
         call("destroy");
         stateScripts = FlxDestroyUtil.destroy(stateScripts);
+    }
+
+    public function call(name:String, ?args:Array<Dynamic>, ?defaultVal:Dynamic):Dynamic {
+        if (stateScripts != null)
+            return stateScripts.call(name, args);
+        return defaultVal;
     }
 
     public static function getState():MusicBeatSubstate {

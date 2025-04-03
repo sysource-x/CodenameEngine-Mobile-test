@@ -12,11 +12,10 @@ import funkin.backend.scripting.ScriptPack;
 import funkin.backend.system.interfaces.IBeatReceiver;
 import funkin.backend.system.Conductor;
 import funkin.options.PlayerSettings;
-
-#if TOUCH_CONTROLS
 /*
 @author of the code is sysource_xyz and HomuHomu of github images mobile.pngs (i rob sorry:(...)
 */
+#if TOUCH_CONTROLS
 import mobile.funkin.backend.utils.MobileData;
 import mobile.objects.Hitbox;
 import mobile.objects.TouchPad;
@@ -25,10 +24,7 @@ import flixel.util.FlxDestroyUtil;
 #end
 
 class MusicBeatState extends FlxState implements IBeatReceiver {
-    private var lastBeat:Float = 0;
-    private var lastStep:Float = 0;
-
-    public var graphicCache:GraphicCacheSprite = new GraphicCacheSprite();
+    public static var instance:MusicBeatState;
 
     #if TOUCH_CONTROLS
     public var touchPad:TouchPad;
@@ -37,7 +33,8 @@ class MusicBeatState extends FlxState implements IBeatReceiver {
     public var tpadCam:FlxCamera;
     #end
 
-    public var cancelConductorUpdate:Bool = false;
+    private var lastBeat:Float = 0;
+    private var lastStep:Float = 0;
 
     public var curStep(get, never):Int;
     public var curBeat(get, never):Int;
@@ -62,122 +59,13 @@ class MusicBeatState extends FlxState implements IBeatReceiver {
     inline function get_songPos():Float
         return Conductor.songPosition;
 
-    public var controls(get, never):Controls;
-    public var controlsP1(get, never):Controls;
-    public var controlsP2(get, never):Controls;
-
     public var stateScripts:ScriptPack;
     public var scriptsAllowed:Bool = true;
 
-    public static var lastScriptName:String = null;
-    public static var lastStateName:String = null;
-
-    public var scriptName:String = null;
-
-    public static var skipTransOut:Bool = false;
-    public static var skipTransIn:Bool = false;
-
-    inline function get_controls():Controls
-        return PlayerSettings.solo.controls;
-    inline function get_controlsP1():Controls
-        return PlayerSettings.player1.controls;
-    inline function get_controlsP2():Controls
-        return PlayerSettings.player2.controls;
-
     public function new(scriptsAllowed:Bool = true, ?scriptName:String) {
         super();
-        this.scriptsAllowed = #if SOFTCODED_STATES scriptsAllowed #else false #end;
-
-        if (lastStateName != (lastStateName = Type.getClassName(Type.getClass(this)))) {
-            lastScriptName = null;
-        }
-        this.scriptName = scriptName != null ? scriptName : lastScriptName;
-        lastScriptName = this.scriptName;
-    }
-
-    function loadScript() {
-        var className = Type.getClassName(Type.getClass(this));
-        if (stateScripts == null)
-            (stateScripts = new ScriptPack(className)).setParent(this);
-        if (scriptsAllowed) {
-            if (stateScripts.scripts.length == 0) {
-                var scriptName = this.scriptName != null ? this.scriptName : className.substr(className.lastIndexOf(".") + 1);
-                for (i in funkin.backend.assets.ModsFolder.getLoadedMods()) {
-                    var path = Paths.script('data/states/${scriptName}/LIB_$i');
-                    var script = Script.create(path);
-                    if (script is DummyScript) continue;
-                    script.remappedNames.set(script.fileName, '$i:${script.fileName}');
-                    stateScripts.add(script);
-                    script.load();
-                }
-            } else stateScripts.reload();
-        }
-    }
-
-    public override function tryUpdate(elapsed:Float):Void {
-        if (persistentUpdate || subState == null) {
-            call("preUpdate", [elapsed]);
-            update(elapsed);
-            call("postUpdate", [elapsed]);
-        }
-
-        if (_requestSubStateReset) {
-            _requestSubStateReset = false;
-            resetSubState();
-        }
-        if (subState != null) {
-            subState.tryUpdate(elapsed);
-        }
-    }
-
-    override function create() {
-        loadScript();
-        Framerate.offset.y = 0;
-        super.create();
-        call("create");
-    }
-
-    public override function createPost() {
-        super.createPost();
-        persistentUpdate = true;
-        call("postCreate");
-        if (!skipTransIn)
-            openSubState(new MusicBeatTransition(null));
-        skipTransIn = false;
-        skipTransOut = false;
-    }
-
-    public function call(name:String, ?args:Array<Dynamic>, ?defaultVal:Dynamic):Dynamic {
-        if (stateScripts != null)
-            return stateScripts.call(name, args);
-        return defaultVal;
-    }
-
-    public function event<T:CancellableEvent>(name:String, event:T):T {
-        if (stateScripts != null)
-            stateScripts.call(name, [event]);
-        return event;
-    }
-
-    override function update(elapsed:Float) {
-        if (FlxG.keys.justPressed.F5) {
-            loadScript();
-        }
-        call("update", [elapsed]);
-
-        super.update(elapsed);
-    }
-
-    public override function destroy() {
-        #if TOUCH_CONTROLS
-        removeTouchPad();
-        removeHitbox();
-        #end
-
-        super.destroy();
-        graphicCache.destroy();
-        call("destroy");
-        stateScripts = FlxDestroyUtil.destroy(stateScripts);
+        instance = this;
+        this.scriptsAllowed = scriptsAllowed;
     }
 
     public function addTouchPad(DPad:String, Action:String):Void {
@@ -249,6 +137,24 @@ class MusicBeatState extends FlxState implements IBeatReceiver {
             addTouchPadCamera();
         }
         #end
+    }
+
+    override function destroy():Void {
+        #if TOUCH_CONTROLS
+        removeTouchPad();
+        removeHitbox();
+        #end
+
+        super.destroy();
+        graphicCache.destroy();
+        call("destroy");
+        stateScripts = FlxDestroyUtil.destroy(stateScripts);
+    }
+
+    public function call(name:String, ?args:Array<Dynamic>, ?defaultVal:Dynamic):Dynamic {
+        if (stateScripts != null)
+            return stateScripts.call(name, args);
+        return defaultVal;
     }
 
     public static function getState():MusicBeatState {

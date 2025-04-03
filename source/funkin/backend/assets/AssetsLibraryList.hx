@@ -166,7 +166,7 @@ class AssetsLibraryList extends AssetLibrary {
 	override public function list(type:String):Array<String> {
 		var items = [];
 
-		// Itera apenas pelas bibliotecas internas
+		// LIBRARY INTERNAL .APK
 		for (library in libraries) {
 			var libraryItems = library.list(type);
 
