@@ -18,7 +18,8 @@ class UITextBox extends UISliceSprite implements IUIFocusable {
 	var __wasFocused:Bool = false;
 
 	public function new(x:Float, y:Float, text:String = "", width:Int = 320, height:Int = 32, multiline:Bool = false) {
-		super(x, y, width, height, 'editors/ui/inputbox');
+		// Carregar imagem de fundo do diretório interno
+		super(x, y, width, height, 'assets/images/editors/ui/inputbox');
 
 		label = new UIText(0, 0, width, text);
 		members.push(label);
@@ -72,6 +73,7 @@ class UITextBox extends UISliceSprite implements IUIFocusable {
 		framesOffset = (selected ? 18 : (hovered ? 9 : 0));
 		@:privateAccess {
 			if (selected) {
+				FlxG.stage.window.textInputEnabled = true;
 				__wasFocused = true;
 				caretSpr.alpha = (FlxG.game.ticks % 666) >= 333 ? 1 : 0;
 
@@ -119,11 +121,7 @@ class UITextBox extends UISliceSprite implements IUIFocusable {
 			case END:
 				position = label.text.length;
 			case V:
-				// Hey lj here, fixed copying because before we checked if the modifier was left or right ctrl
-				// but somehow it gave a int outside of the KeyModifier's range :sob:
-				// apparently there is a boolean that just checks for you. yw :D
-
-				// if we are not holding ctrl, ignore
+				 // if we are not holding ctrl, ignore
 				if (!modifier.ctrlKey) return;
 				// we pasting
 				var data:String = Clipboard.generalClipboard.getData(TEXT_FORMAT);

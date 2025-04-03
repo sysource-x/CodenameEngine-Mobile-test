@@ -1,47 +1,46 @@
 package funkin.editors;
 
 import haxe.io.Path;
-import lime.ui.FileDialog;
+import lime.system.System;
 
 class SaveSubstate extends MusicBeatSubstate {
-	public var saveOptions:Map<String, Bool>;
-	public var options:SaveSubstateData;
+    public var saveOptions:Map<String, Bool>;
+    public var options:SaveSubstateData;
 
-	public var data:String;
+    public var data:String;
 
-	public var cam:FlxCamera;
+    public var cam:FlxCamera;
 
-	public function new(data:String, ?options:SaveSubstateData, ?saveOptions:Map<String, Bool>) {
-		super();
-		this.data = data;
+    public function new(data:String, ?options:SaveSubstateData, ?saveOptions:Map<String, Bool>) {
+        super();
+        this.data = data;
 
-		if (saveOptions == null)
-			saveOptions = [];
-		this.saveOptions = saveOptions;
+        if (saveOptions == null)
+            saveOptions = [];
+        this.saveOptions = saveOptions;
 
-		if (options != null)
-			this.options = options;
-	}
+        if (options != null)
+            this.options = options;
+    }
 
-	public override function create() {
-		super.create();
+    public override function create() {
+        super.create();
 
-		var fileDialog = new FileDialog();
-		fileDialog.onCancel.add(function() close());
-		fileDialog.onSelect.add(function(str) {
-			CoolUtil.safeSaveFile(str, data);
-			close();
-		});
-		fileDialog.browse(SAVE, options.saveExt.getDefault(Path.extension(options.defaultSaveFile)), options.defaultSaveFile);
-	}
+        // Salvar automaticamente no armazenamento interno
+        var savePath = lime.system.System.applicationStorageDirectory + "/" + options.defaultSaveFile;
+        CoolUtil.safeSaveFile(savePath, data);
+        trace("Save file in: " + savePath);
 
-	public override function update(elapsed:Float) {
-		super.update(elapsed);
-		parent.persistentUpdate = false;
-	}
+        close();
+    }
+
+    public override function update(elapsed:Float) {
+        super.update(elapsed);
+        parent.persistentUpdate = false;
+    }
 }
 
 typedef SaveSubstateData = {
-	var ?defaultSaveFile:String;
-	var ?saveExt:String;
+    var ?defaultSaveFile:String;
+    var ?saveExt:String;
 }

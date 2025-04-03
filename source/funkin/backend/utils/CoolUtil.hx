@@ -27,6 +27,9 @@ import haxe.CallStack;
 using StringTools;
 
 @:allow(funkin.game.PlayState)
+#if cpp
+@:cppFileCode('#include <thread>')
+#end
 class CoolUtil
 {
 	public static function getLastExceptionStack():String {
@@ -66,15 +69,16 @@ class CoolUtil
 	 */
 	@:noUsing public static function deleteFolder(delete:String) {
 		#if sys
-		if (!FileSystem.exists(delete)) return;
-		var files:Array<String> = FileSystem.readDirectory(delete);
+		var folder = lime.system.System.applicationStorageDirectory + "/" + delete;
+		if (!FileSystem.exists(folder)) return;
+		var files:Array<String> = FileSystem.readDirectory(folder);
 		for(file in files) {
-			if (FileSystem.isDirectory(delete + "/" + file)) {
-				deleteFolder(delete + "/" + file);
-				FileSystem.deleteDirectory(delete + "/" + file);
+			if (FileSystem.isDirectory(folder + "/" + file)) {
+				deleteFolder(folder + "/" + file);
+				FileSystem.deleteDirectory(folder + "/" + file);
 			} else {
-				try FileSystem.deleteFile(delete + "/" + file)
-				catch(e) Logs.trace("Could not delete " + delete + "/" + file, WARNING);
+				try FileSystem.deleteFile(folder + "/" + file)
+				catch(e) Logs.trace("Could not delete " + folder + "/" + file, WARNING);
 			}
 		}
 		#end
@@ -88,11 +92,12 @@ class CoolUtil
 	@:noUsing public static function safeSaveFile(path:String, content:OneOfTwo<String, Bytes>, showErrorBox:Bool = true) {
 		#if sys
 		try {
-			addMissingFolders(Path.directory(path));
-			if(content is Bytes) sys.io.File.saveBytes(path, content);
-			else sys.io.File.saveContent(path, content);
+			var fullPath = lime.system.System.applicationStorageDirectory + "/" + path;
+			addMissingFolders(Path.directory(fullPath));
+			if(content is Bytes) sys.io.File.saveBytes(fullPath, content);
+			else sys.io.File.saveContent(fullPath, content);
 		} catch(e) {
-			var errMsg:String = 'Error while trying to save the file: ${Std.string(e).replace('\n', ' ')}';
+			var errMsg:String = 'Error while trying to save the file: ${Std.string(e).replace("\n", " ")}';
 			Logs.traceColored([Logs.logText(errMsg, RED)], ERROR);
 			if(showErrorBox) funkin.backend.utils.NativeAPI.showMessageBox("Codename Engine Warning", errMsg, MSG_WARNING);
 		}
@@ -173,7 +178,8 @@ class CoolUtil
 	 */
 	@:noUsing public static function addMissingFolders(path:String):String {
 		#if sys
-		var folders:Array<String> = path.split("/");
+		var fullPath = lime.system.System.applicationStorageDirectory + "/" + path;
+		var folders:Array<String> = fullPath.split("/");
 		var currentPath:String = "";
 
 		for (folder in folders) {
@@ -372,10 +378,10 @@ class CoolUtil
 	/**
 	 * Plays music, while resetting the Conductor, and taking info from INI in count.
 	 * @param path Path to the music
-	 * @param Persist Whenever the music should persist while switching states
+	 * @param Persist Whether the music should persist while switching states
 	 * @param DefaultBPM Default BPM of the music (102)
 	 * @param Volume Volume of the music (1)
-	 * @param Looped Whenever the music loops (true)
+	 * @param Looped Whether the music loops (true)
 	 * @param Group A group that this music belongs to (default)
 	 */
 	@:noUsing public static function playMusic(path:String, Persist:Bool = false, Volume:Int = 1, Looped:Bool = true, DefaultBPM:Int = 102, ?Group:FlxSoundGroup) {
@@ -385,7 +391,7 @@ class CoolUtil
 			FlxG.sound.music.persist = Persist;
 		}
 
-		var infoPath = '${Path.withoutExtension(path)}.ini';
+		var infoPath = "assets/" + Path.withoutExtension(path) + ".ini"; // Ajustado para carregar do diretório interno
 		if (Assets.exists(infoPath)) {
 			var musicInfo = IniUtil.parseAsset(infoPath, [
 				"BPM" => null,
@@ -396,7 +402,6 @@ class CoolUtil
 			var beatsPerMeasure:Float = 4;
 			var stepsPerBeat:Float = 4;
 
-			// Check later, i dont think timeSignParsed can contain null, only nan
 			if (timeSignParsed.length == 2 && !timeSignParsed.contains(null)) {
 				beatsPerMeasure = timeSignParsed[0] == null || timeSignParsed[0] <= 0 ? 4 : cast timeSignParsed[0];
 				stepsPerBeat = timeSignParsed[1] == null || timeSignParsed[1] <= 0 ? 4 : cast timeSignParsed[1];
@@ -426,19 +431,15 @@ class CoolUtil
 	}
 
 	/**
-	 * Allows you to split a text file from a path, into a "cool text file", AKA a list. Allows for comments. For example,
-	 * `# comment`
-	 * `test1`
-	 * ` `
-	 * `test2`
-	 * will return `["test1", "test2"]`
-	 * @param path
+	 * Allows you to split a text file from a path, into a "cool text file", AKA a list. Allows for comments.
+	 * @param path Path to the text file.
 	 * @return Array<String>
 	 */
 	@:noUsing public static function coolTextFile(path:String):Array<String>
 	{
+		var fullPath = "assets/" + path; // Carregar do diretório interno
 		var trim:String;
-		return [for(line in Assets.getText(path).split("\n")) if ((trim = line.trim()) != "" && !trim.startsWith("#")) trim];
+		return [for(line in Assets.getText(fullPath).split("\n")) if ((trim = line.trim()) != "" && !trim.startsWith("#")) trim];
 	}
 
 	/**
@@ -795,204 +796,4 @@ class CoolUtil
 			var idx = part.indexOf("..");
 			if (idx != -1) {
 				var start = Std.parseInt(part.substring(0, idx).trim());
-				var end = Std.parseInt(part.substring(idx + 2).trim());
-
-				if(start == null || end == null) {
-					continue;
-				}
-
-				if (start < end) {
-					for (j in start...end + 1) {
-						result.push(j);
-					}
-				} else {
-					for (j in end...start + 1) {
-						result.push(start + end - j);
-					}
-				}
-			} else {
-				var num = Std.parseInt(part);
-				if (num != null) {
-					result.push(num);
-				}
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Converts an array of numbers into a string of ranges.
-	 * Example: [1,2,3,5,7,8,9,8,7,6,5] -> "1..3,5,7..9,8..5"
-	 * @param numbers Array of numbers
-	 * @return String representing the ranges
-	 */
-	public static function formatNumberRange(numbers:Array<Int>, seperator:String = ","):String {
-		if (numbers.length == 0) return "";
-
-		var result:Array<String> = [];
-		var i = 0;
-
-		while (i < numbers.length) {
-			var start = numbers[i];
-			var end = start;
-			var direction = 0; // 0: no sequence, 1: increasing, -1: decreasing
-
-			if (i + 1 < numbers.length) { // detect direction of sequence
-				if (numbers[i + 1] == end + 1) {
-					direction = 1;
-				} else if (numbers[i + 1] == end - 1) {
-					direction = -1;
-				}
-			}
-
-			if(direction != 0) {
-				while (i + 1 < numbers.length && (numbers[i + 1] == end + direction)) {
-					end = numbers[i + 1];
-					i++;
-				}
-			}
-
-			if (start == end) { // no direction
-				result.push('${start}');
-			} else if (start + direction == end) { // 1 step increment
-				result.push('${start},${end}');
-			} else { // store as range
-				result.push('${start}..${end}');
-			}
-
-			i++;
-		}
-
-		return result.join(seperator);
-	}
-
-	public inline static function parsePropertyString(fieldPath:String):Array<OneOfTwo<String, Int>> {
-		return FlxTween.parseFieldString(fieldPath);
-	}
-
-	public static function stringifyFieldsPath(fields:Array<OneOfTwo<String, Int>>):String {
-		var str = new StringBuf();
-		var first = true;
-		for (field in fields) {
-			if (Type.typeof(field) == TInt) {
-				str.add('[${field}]');
-			} else {
-				if (!first)
-					str.add('.');
-				str.add(field);
-			}
-			first = false;
-		}
-		return str.toString();
-	}
-
-	public static function parseProperty(target:Dynamic, fields:OneOfTwo<String, Array<OneOfTwo<String, Int>>>):Dynamic {
-		var fields:Array<OneOfTwo<String, Int>> = {
-			if((fields is String)) CoolUtil.parsePropertyString(fields);
-			else fields;
-		}
-
-		var field = CoolUtil.last(fields);
-		for (i in 0...fields.length - 1) {
-			var component = fields[i];
-			if (Type.typeof(component) == TInt) {
-				if ((target is Array)) {
-					var index:Int = cast component;
-					var arr:Array<Dynamic> = cast target;
-					target = arr[index];
-				}
-			} else { // TClass(String)
-				target = Reflect.getProperty(target, component);
-			}
-			if (!Reflect.isObject(target) && !(target is Array))
-				throw 'The object does not have the property "$component" in "${stringifyFieldsPath(fields)}"';
-		}
-		return new PropertyInfo(target, field);
-	}
-
-	public static function cloneProperty(toTarget:Dynamic, fields:OneOfTwo<String, Array<OneOfTwo<String, Int>>>, fromTarget:Dynamic):Dynamic {
-		var fields:Array<OneOfTwo<String, Int>> = {
-			if((fields is String)) CoolUtil.parsePropertyString(fields);
-			else fields;
-		}
-
-		var toProperty = CoolUtil.parseProperty(toTarget, fields);
-		var fromProperty = CoolUtil.parseProperty(fromTarget, fields);
-
-		return toProperty.setValue(fromProperty.getValue());
-	}
-}
-
-class PropertyInfo {
-	public var object:Dynamic;
-	public var field:OneOfTwo<String, Int>;
-	public var typeOfField:Type.ValueType;
-	#if hscript_improved
-	public var isCustom:Bool = false;
-	public var custom:hscript.IHScriptCustomBehaviour;
-	#end
-
-	public function new(object:Dynamic, field:OneOfTwo<String, Int>) {
-		this.object = object;
-		this.field = field;
-		#if hscript_improved
-		if (object is hscript.IHScriptCustomBehaviour)
-		{
-			isCustom = true;
-			custom = cast object;
-		}
-		#end
-
-		typeOfField = Type.typeof(field);
-	}
-
-	public function getValue():Dynamic
-	{
-		if (typeOfField == TInt)
-		{
-			var index:Int = cast field;
-			var arr:Array<Dynamic> = cast object;
-			return arr[index];
-		}
-		else
-		{
-			#if hscript_improved
-			if (isCustom)
-				return custom.hget(field);
-			else
-			#end
-			return Reflect.getProperty(object, field);
-		}
-	}
-
-	public function setValue(value:Dynamic):Void
-	{
-		if (typeOfField == TInt)
-		{
-			var index:Int = cast field;
-			var arr:Array<Dynamic> = cast object;
-			arr[index] = value;
-		}
-		else
-		{
-			#if hscript_improved
-			if (isCustom)
-				custom.hset(field, value);
-			else
-			#end
-			Reflect.setProperty(object, field, value);
-		}
-	}
-}
-
-/**
- * SFXs to play using `playMenuSFX`.
- */
-enum abstract CoolSfx(Int) from Int {
-	var SCROLL = 0;
-	var CONFIRM = 1;
-	var CANCEL = 2;
-	var CHECKED = 3;
-	var UNCHECKED = 4;
-	var WARNING = 5;
-}
+				var end = Std.parseInt(part.substring(idx +

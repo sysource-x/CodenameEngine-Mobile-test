@@ -14,153 +14,133 @@ import funkin.options.type.*;
 using StringTools;
 
 class CharterSelection extends EditorTreeMenu {
-	public var freeplayList:FreeplaySonglist;
-	public var curSong:ChartMetaData;
-	public override function create() {
-		bgType = "charter";
+    public var freeplayList:FreeplaySonglist;
+    public var curSong:ChartMetaData;
+    private final button:String = controls.touchC ? 'A' : 'ACCEPT';
 
-		super.create();
+    public override function create() {
+        bgType = "charter";
 
-		Framerate.offset.y = 60;
+        super.create();
 
-		freeplayList = FreeplaySonglist.get(false);
+        Framerate.offset.y = 60;
 
-		var list:Array<OptionType> = [
-			for(s in freeplayList.songs) new EditorIconOption(s.name, "Press ACCEPT to choose a difficulty to edit.", s.icon, function() {
-				curSong = s;
-				var list:Array<OptionType> = [
-					for(d in s.difficulties) if (d != "")
-						new TextOption(d, "Press ACCEPT to edit the chart for the selected difficulty", function() {
-							FlxG.switchState(new Charter(s.name, d));
-						})
-				];
-				list.push(new NewOption("New Difficulty", "New Difficulty", function() {
-					FlxG.state.openSubState(new ChartCreationScreen(saveChart));
-				}));
-				optionsTree.add(new OptionsScreen(s.name, "Select a difficulty to continue.", list));
-			}, s.parsedColor.getDefault(0xFFFFFFFF))
-		];
+        // Carregar lista de músicas do armazenamento interno
+        freeplayList = loadFreeplayList();
 
-		list.insert(0, new NewOption("New Song", "New Song", function() {
-			FlxG.state.openSubState(new SongCreationScreen(saveSong));
-		}));
+        var list:Array<OptionType> = [
+            for(s in freeplayList.songs) new EditorIconOption(s.name, "Press " + button + " to choose a difficulty to edit.", s.icon, function() {
+                curSong = s;
+                var list:Array<OptionType> = [
+                    for(d in s.difficulties) if (d != "")
+                        new TextOption(d, "Press " + button + " to edit the chart for the selected difficulty", function() {
+                            #if TOUCH_CONTROLS
+                            if (funkin.backend.system.Controls.instance.touchC)
+                            {
+                                openSubState(new UIWarningSubstate("Charter: Touch Not Supported!", "Please connect a keyboard and mouse to access this editor.", [
+                                    {label: "Ok", color: 0xFFFF0000, onClick: function(t) {}}
+                                ]));
+                            } else
+                            #end
+                            FlxG.switchState(new Charter(s.name, d));
+                        })
+                ];
+                list.push(new NewOption("New Difficulty", "New Difficulty", function() {
+                    #if TOUCH_CONTROLS
+                    if (funkin.backend.system.Controls.instance.touchC)
+                    {
+                        openSubState(new UIWarningSubstate("New Difficulty: Touch Not Supported!", "Please connect a keyboard and mouse to access this editor.", [
+                            {label: "Ok", color: 0xFFFF0000, onClick: function(t) {}}
+                        ]));
+                    } else
+                    #end
+                    FlxG.state.openSubState(new ChartCreationScreen(saveChart));
+                }));
+                optionsTree.add(new OptionsScreen(s.name, "Select a difficulty to continue.", list, 'UP_DOWN', 'A_B'));
+            }, s.parsedColor.getDefault(0xFFFFFFFF))
+        ];
 
-		main = new OptionsScreen("Chart Editor", "Select a song to modify the charts from.", list);
+        list.insert(0, new NewOption("New Song", "New Song", function() {
+            #if TOUCH_CONTROLS
+            if (funkin.backend.system.Controls.instance.touchC)
+            {
+                openSubState(new UIWarningSubstate("New Song: Touch Not Supported!", "Please connect a keyboard and mouse to access this editor.", [
+                    {label: "Ok", color: 0xFFFF0000, onClick: function(t) {}}
+                ]));
+            } else
+            #end
+            FlxG.state.openSubState(new SongCreationScreen(saveSong));
+        }));
 
-		DiscordUtil.call("onEditorTreeLoaded", ["Chart Editor"]);
-	}
+        main = new OptionsScreen("Chart Editor", "Select a song to modify the charts from.", list, 'UP_DOWN', 'A_B');
 
-	override function createPost() {
-		super.createPost();
+        DiscordUtil.call("onEditorTreeLoaded", ["Chart Editor"]);
+    }
 
-		main.changeSelection(1);
-	}
+    override function createPost() {
+        super.createPost();
 
-	public override function update(elapsed:Float) {
-		super.update(elapsed);
+        main.changeSelection(1);
+    }
 
-		bg.colorTransform.redOffset = lerp(bg.colorTransform.redOffset, 0, 0.0625);
-		bg.colorTransform.greenOffset = lerp(bg.colorTransform.greenOffset, 0, 0.0625);
-		bg.colorTransform.blueOffset = lerp(bg.colorTransform.blueOffset, 0, 0.0625);
-		bg.colorTransform.redMultiplier = lerp(bg.colorTransform.redMultiplier, 1, 0.0625);
-		bg.colorTransform.greenMultiplier = lerp(bg.colorTransform.greenMultiplier, 1, 0.0625);
-		bg.colorTransform.blueMultiplier = lerp(bg.colorTransform.blueMultiplier, 1, 0.0625);
-	}
+    // Função para carregar a lista de músicas do armazenamento interno
+    private function loadFreeplayList():FreeplaySonglist {
+        var path = lime.system.System.applicationStorageDirectory + "/songs/freeplayList.json";
+        if (lime.utils.Assets.exists(path)) {
+            var json = lime.utils.Assets.getText(path);
+            return Json.parse(json);
+        }
+        return new FreeplaySonglist(); // Retorna uma lista vazia se o arquivo não existir
+    }
 
-	public override function onMenuChange() {
-		super.onMenuChange();
-		if (optionsTree.members.length > 1) { // selected a song
-			if(main != null) {
-				var opt = main.members[main.curSelected];
-				if(opt is EditorIconOption) {
-					var opt:EditorIconOption = cast opt;
+    public function saveSong(creation:SongCreationData) {
+        var songAlreadyExists:Bool = [for (s in freeplayList.songs) s.name.toLowerCase()].contains(creation.meta.name.toLowerCase());
 
-					// small flashbang
-					var color = opt.flashColor;
-					bg.colorTransform.redOffset = 0.25 * color.red;
-					bg.colorTransform.greenOffset = 0.25 * color.green;
-					bg.colorTransform.blueOffset = 0.25 * color.blue;
-					bg.colorTransform.redMultiplier = FlxMath.lerp(1, color.redFloat, 0.25);
-					bg.colorTransform.greenMultiplier = FlxMath.lerp(1, color.greenFloat, 0.25);
-					bg.colorTransform.blueMultiplier = FlxMath.lerp(1, color.blueFloat, 0.25);
-				}
-			}
-		}
-	}
+        if (songAlreadyExists) {
+            openSubState(new UIWarningSubstate("Creating Song: Error!", "The song you are trying to create already exists. If you would like to override it, delete the song first!", [
+                {label: "Ok", color: 0xFFFF0000, onClick: function(t) {}}
+            ]));
+            return;
+        }
 
-	public function saveSong(creation:SongCreationData) {
-		var songAlreadlyExsits:Bool = [for (s in freeplayList.songs) s.name.toLowerCase()].contains(creation.meta.name.toLowerCase());
+        // Caminhos internos
+        var songsDir:String = lime.system.System.applicationStorageDirectory + "/songs/";
+        var songFolder:String = '$songsDir${creation.meta.name}';
 
-		if (songAlreadlyExsits) {
-			openSubState(new UIWarningSubstate("Creating Song: Error!", "The song you are trying to create alreadly exists, if you would like to override it delete the song first!", [
-				{label: "Ok", color: 0xFFFF0000, onClick: function(t) {}}
-			]));
-			return;
-		}
+        // Criar diretórios
+        sys.FileSystem.createDirectory(songFolder);
+        sys.FileSystem.createDirectory('$songFolder/song');
+        sys.FileSystem.createDirectory('$songFolder/charts');
 
-		// Paths
-		var songsDir:String = '${Paths.getAssetsRoot()}/songs/';
-		var songFolder:String = '$songsDir${creation.meta.name}';
+        // Salvar arquivos
+        CoolUtil.safeSaveFile('$songFolder/meta.json', Json.stringify(creation.meta, "\t"));
+        if (creation.instBytes != null) sys.io.File.saveBytes('$songFolder/song/Inst.${Paths.SOUND_EXT}', creation.instBytes);
+        if (creation.voicesBytes != null) sys.io.File.saveBytes('$songFolder/song/Voices.${Paths.SOUND_EXT}', creation.voicesBytes);
 
-		#if sys
-		// Make Directories
-		sys.FileSystem.createDirectory(songFolder);
-		sys.FileSystem.createDirectory('$songFolder/song');
-		sys.FileSystem.createDirectory('$songFolder/charts');
+        // Atualizar lista de músicas
+        freeplayList.songs.insert(0, creation.meta);
+        main.insert(1, new EditorIconOption(creation.meta.name, "Press " + button + " to choose a difficulty to edit.", creation.meta.icon, function() {
+            curSong = creation.meta;
+        }, creation.meta.parsedColor.getDefault(0xFFFFFFFF)));
+    }
 
-		// Save Files
-		CoolUtil.safeSaveFile('$songFolder/meta.json', Json.stringify(creation.meta, "\t"));
-		if (creation.instBytes != null) sys.io.File.saveBytes('$songFolder/song/Inst.${Paths.SOUND_EXT}', creation.instBytes);
-		if (creation.voicesBytes != null) sys.io.File.saveBytes('$songFolder/song/Voices.${Paths.SOUND_EXT}', creation.voicesBytes);
-		#end
+    public function saveChart(name:String, data:ChartData) {
+        var difficultyAlreadyExists:Bool = curSong.difficulties.contains(name);
 
-		var option = new EditorIconOption(creation.meta.name, "Press ACCEPT to choose a difficulty to edit.", creation.meta.icon, function() {
-			curSong = creation.meta;
-			var list:Array<OptionType> = [
-				for(d in creation.meta.difficulties)
-					if (d != "") new TextOption(d, "Press ACCEPT to edit the chart for the selected difficulty", function() {
-						FlxG.switchState(new Charter(creation.meta.name, d));
-					})
-			];
-			list.push(new NewOption("New Difficulty", "New Difficulty", function() {
-				FlxG.state.openSubState(new ChartCreationScreen(saveChart));
-			}));
-			optionsTree.insert(1, new OptionsScreen(creation.meta.name, "Select a difficulty to continue.", list));
-		}, creation.meta.parsedColor.getDefault(0xFFFFFFFF));
+        if (difficultyAlreadyExists) {
+            openSubState(new UIWarningSubstate("Creating Chart: Error!", "The chart you are trying to create already exists. If you would like to override it, delete the chart first!", [
+                {label: "Ok", color: 0xFFFF0000, onClick: function(t) {}}
+            ]));
+            return;
+        }
 
-		// Add to List
-		freeplayList.songs.insert(0, creation.meta);
-		main.insert(1, option);
-	}
+        // Caminhos internos
+        var songFolder:String = lime.system.System.applicationStorageDirectory + "/songs/${curSong.name}";
 
-	public function saveChart(name:String, data:ChartData) {
-		var difficultyAlreadlyExsits:Bool = curSong.difficulties.contains(name);
+        // Salvar arquivos
+        CoolUtil.safeSaveFile('$songFolder/charts/${name}.json', Json.stringify(data, "\t"));
 
-		if (difficultyAlreadlyExsits) {
-			openSubState(new UIWarningSubstate("Creating Chart: Error!", "The chart you are trying to create alreadly exists, if you would like to override it delete the chart first!", [
-				{label: "Ok", color: 0xFFFF0000, onClick: function(t) {}}
-			]));
-			return;
-		}
-
-		// Paths
-		var songFolder:String = '${Paths.getAssetsRoot()}/songs/${curSong.name}';
-
-		// Save Files
-		CoolUtil.safeSaveFile('$songFolder/charts/${name}.json', Json.stringify(data, "\t"));
-
-		// Add to List
-		curSong.difficulties.push(name);
-		var option = new TextOption(name, "Press ACCEPT to edit the chart for the selected difficulty", function() {
-			FlxG.switchState(new Charter(curSong.name, name));
-		});
-		optionsTree.members[optionsTree.members.length-1].insert(optionsTree.members[optionsTree.members.length-1].length-1, option);
-
-		// Add to Meta
-		var meta = Json.parse(sys.io.File.getContent('$songFolder/meta.json'));
-		if (meta.difficulties != null && !meta.difficulties.contains(name)) {
-			meta.difficulties.push(name);
-			CoolUtil.safeSaveFile('$songFolder/meta.json', Json.stringify(meta));
-		}
-	}
+        // Atualizar lista de dificuldades
+        curSong.difficulties.push(name);
+    }
 }

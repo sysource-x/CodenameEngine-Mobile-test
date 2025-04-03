@@ -13,188 +13,195 @@ import funkin.backend.system.Conductor;
 
 class GameOverSubstate extends MusicBeatSubstate
 {
-	var character:Character;
+    var character:Character;
 
-	public var characterName:String;
-	public var gameOverSong:String;
-	public var gameOverSongBPM:Float;
-	public var lossSFXName:String;
-	public var retrySFX:String;
-	public var player:Bool;
+    public var characterName:String;
+    public var gameOverSong:String;
+    public var gameOverSongBPM:Float;
+    public var lossSFXName:String;
+    public var retrySFX:String;
+    public var player:Bool;
 
-	var camFollow:FlxObject;
+    var camFollow:FlxObject;
 
-	public static var script:String = "";
+    public static var script:String = "";
 
-	public var gameoverScript:Script;
-	public var game:PlayState = PlayState.instance; // shortcut
+    public var gameoverScript:Script;
+    public var game:PlayState = PlayState.instance; // shortcut
 
-	private var __cancelDefault:Bool = false;
+    private var __cancelDefault:Bool = false;
 
-	var x:Float = 0;
-	var y:Float = 0;
+    var x:Float = 0;
+    var y:Float = 0;
 
-	public var lossSFX:FlxSound;
+    public var lossSFX:FlxSound;
 
-	public function new(x:Float, y:Float, character:String = "bf-dead", player:Bool = true, gameOverSong:String = "gameOver", lossSFX:String = "gameOverSFX", retrySFX:String = "gameOverEnd")
-	{
-		super();
-		this.x = x;
-		this.y = y;
-		this.characterName = character;
-		this.player = player;
-		this.gameOverSong = gameOverSong;
-		this.lossSFXName = lossSFX;
-		this.retrySFX = retrySFX;
-	}
+    public function new(x:Float, y:Float, character:String = "bf-dead", player:Bool = true, gameOverSong:String = "gameOver", lossSFX:String = "gameOverSFX", retrySFX:String = "gameOverEnd")
+    {
+        super();
+        this.x = x;
+        this.y = y;
+        this.characterName = character;
+        this.player = player;
+        this.gameOverSong = gameOverSong;
+        this.lossSFXName = lossSFX;
+        this.retrySFX = retrySFX;
+    }
 
-	public override function create()
-	{
-		super.create();
+    public override function create()
+    {
+        super.create();
 
-		if (FlxG.sound.music != null)
-			FlxG.sound.music.stop();
+        if (FlxG.sound.music != null)
+            FlxG.sound.music.stop();
 
-		gameoverScript = Script.create(Paths.script(script));
-		gameoverScript.setParent(this);
-		gameoverScript.load();
+        // Carregar script do diretório interno
+        gameoverScript = Script.create("assets/data/scripts/" + script + ".hx");
+        gameoverScript.setParent(this);
+        gameoverScript.load();
 
-		var event = EventManager.get(GameOverCreationEvent).recycle(x, y, characterName, player, gameOverSong, gameOverSongBPM, lossSFXName, retrySFX);
-		gameoverScript.call('create', [event]);
+        var event = EventManager.get(GameOverCreationEvent).recycle(x, y, characterName, player, gameOverSong, gameOverSongBPM, lossSFXName, retrySFX);
+        gameoverScript.call('create', [event]);
 
-		x = event.x;
-		y = event.y;
-		characterName = event.character;
-		player = event.player;
-		gameOverSong = event.gameOverSong;
-		gameOverSongBPM = event.bpm;
-		lossSFXName = event.lossSFX;
-		retrySFX = event.retrySFX;
+        x = event.x;
+        y = event.y;
+        characterName = event.character;
+        player = event.player;
+        gameOverSong = event.gameOverSong;
+        gameOverSongBPM = event.bpm;
+        lossSFXName = event.lossSFX;
+        retrySFX = event.retrySFX;
 
-		if (__cancelDefault = event.cancelled)
-			return;
+        if (__cancelDefault = event.cancelled)
+            return;
 
-		character = new Character(x, y, characterName, player);
-		character.danceOnBeat = false;
-		character.playAnim('firstDeath');
-		add(character);
+        character = new Character(x, y, characterName, player);
+        character.danceOnBeat = false;
+        character.playAnim('firstDeath');
+        add(character);
 
-		var camPos = character.getCameraPosition();
-		camFollow = new FlxObject(camPos.x, camPos.y, 1, 1);
-		add(camFollow);
-		FlxG.camera.target = camFollow;
+        var camPos = character.getCameraPosition();
+        camFollow = new FlxObject(camPos.x, camPos.y, 1, 1);
+        add(camFollow);
+        FlxG.camera.target = camFollow;
 
-		lossSFX = FlxG.sound.play(Paths.sound(lossSFXName));
-		Conductor.changeBPM(gameOverSongBPM);
+        // Carregar sons do diretório interno
+        lossSFX = FlxG.sound.play("assets/sounds/" + lossSFXName + ".ogg");
+        Conductor.changeBPM(gameOverSongBPM);
 
-		DiscordUtil.call("onGameOver", []);
-		gameoverScript.call("postCreate");
-	}
+        DiscordUtil.call("onGameOver", []);
+        gameoverScript.call("postCreate");
 
-	override function update(elapsed:Float)
-	{
-		super.update(elapsed);
+        addTouchPad('NONE', 'A_B');
+        addTouchPadCamera();
+    }
 
-		gameoverScript.call("update", [elapsed]);
+    override function update(elapsed:Float)
+    {
+        super.update(elapsed);
 
-		if (__cancelDefault)
-			return;
+        gameoverScript.call("update", [elapsed]);
 
-		if (controls.ACCEPT) endBullshit();
-		if (controls.BACK) exit();
+        if (__cancelDefault)
+            return;
 
-		if (!isEnding && ((!lossSFX.playing) || (character.getAnimName() == "firstDeath" && character.isAnimFinished())) && (FlxG.sound.music == null || !FlxG.sound.music.playing))
-		{
-			CoolUtil.playMusic(Paths.music(gameOverSong), false, 1, true, 100);
-			beatHit(0);
-		}
-	}
+        if (controls.ACCEPT) endBullshit();
+        if (controls.BACK) exit();
 
-	override function beatHit(curBeat:Int)
-	{
-		super.beatHit(curBeat);
+        if (!isEnding && ((!lossSFX.playing) || (character.getAnimName() == "firstDeath" && character.isAnimFinished())) && (FlxG.sound.music == null || !FlxG.sound.music.playing))
+        {
+            // Carregar música do diretório interno
+            CoolUtil.playMusic("assets/music/" + gameOverSong + ".ogg", false, 1, true, 100);
+            beatHit(0);
+        }
+    }
 
-		gameoverScript.call("beatHit", [curBeat]);
+    override function beatHit(curBeat:Int)
+    {
+        super.beatHit(curBeat);
 
-		if (__cancelDefault)
-			return;
+        gameoverScript.call("beatHit", [curBeat]);
 
-		if (FlxG.sound.music != null && FlxG.sound.music.playing)
-			character.playAnim("deathLoop", true, DANCE);
-	}
+        if (__cancelDefault)
+            return;
 
-	override function stepHit(curStep:Int)
-	{
-		super.stepHit(curStep);
-		gameoverScript.call("stepHit", [curStep]);
-	}
+        if (FlxG.sound.music != null && FlxG.sound.music.playing)
+            character.playAnim("deathLoop", true, DANCE);
+    }
 
-	var isEnding:Bool = false;
+    override function stepHit(curStep:Int)
+    {
+        super.stepHit(curStep);
+        gameoverScript.call("stepHit", [curStep]);
+    }
 
-	function endBullshit():Void
-	{
-		if (isEnding)
-			return;
-		isEnding = true;
+    var isEnding:Bool = false;
 
-		var event = new CancellableEvent();
-		gameoverScript.call('onEnd', [event]);
+    function endBullshit():Void
+    {
+        if (isEnding)
+            return;
+        isEnding = true;
 
-		if (event.cancelled)
-			return;
+        var event = new CancellableEvent();
+        gameoverScript.call('onEnd', [event]);
 
-		character.playAnim('deathConfirm', true);
-		if (FlxG.sound.music != null)
-			FlxG.sound.music.stop();
-		FlxG.sound.music = null;
+        if (event.cancelled)
+            return;
 
-		var sound = FlxG.sound.play(Paths.sound(retrySFX));
+        character.playAnim('deathConfirm', true);
+        if (FlxG.sound.music != null)
+            FlxG.sound.music.stop();
+        FlxG.sound.music = null;
 
-		var secsLength:Float = sound.length / 1000;
-		var waitTime = 0.7;
-		var fadeOutTime = secsLength - 0.7;
+        // Carregar som de retry do diretório interno
+        var sound = FlxG.sound.play("assets/sounds/" + retrySFX + ".ogg");
 
-		if (fadeOutTime < 0.5)
-		{
-			fadeOutTime = secsLength;
-			waitTime = 0;
-		}
+        var secsLength:Float = sound.length / 1000;
+        var waitTime = 0.7;
+        var fadeOutTime = secsLength - 0.7;
 
-		new FlxTimer().start(waitTime, function(tmr:FlxTimer)
-		{
-			FlxG.camera.fade(FlxColor.BLACK, fadeOutTime, false, function()
-			{
-				MusicBeatState.skipTransOut = true;
-				FlxG.switchState(new PlayState());
-			});
-		});
-	}
+        if (fadeOutTime < 0.5)
+        {
+            fadeOutTime = secsLength;
+            waitTime = 0;
+        }
 
-	function exit()
-	{
-		var event = new CancellableEvent();
-		gameoverScript.call('onReturnToMenu', [event]);
+        new FlxTimer().start(waitTime, function(tmr:FlxTimer)
+        {
+            FlxG.camera.fade(FlxColor.BLACK, fadeOutTime, false, function()
+            {
+                MusicBeatState.skipTransOut = true;
+                FlxG.switchState(new PlayState());
+            });
+        });
+    }
 
-		if (event.cancelled)
-			return;
+    function exit()
+    {
+        var event = new CancellableEvent();
+        gameoverScript.call('onReturnToMenu', [event]);
 
-		if (PlayState.chartingMode && Charter.undos.unsaved) game.saveWarn(false);
-		else {
-			PlayState.resetSongInfos();
-			if (Charter.instance != null) Charter.instance.__clearStatics();
+        if (event.cancelled)
+            return;
 
-			if (FlxG.sound.music != null) FlxG.sound.music.stop();
-			FlxG.sound.music = null;
+        if (PlayState.chartingMode && Charter.undos.unsaved) game.saveWarn(false);
+        else {
+            PlayState.resetSongInfos();
+            if (Charter.instance != null) Charter.instance.__clearStatics();
 
-			FlxG.switchState(PlayState.isStoryMode ? new StoryMenuState() : new FreeplayState());
-		}
-	}
+            if (FlxG.sound.music != null) FlxG.sound.music.stop();
+            FlxG.sound.music = null;
 
-	override function destroy()
-	{
-		gameoverScript.call("destroy");
-		gameoverScript.destroy();
+            FlxG.switchState(PlayState.isStoryMode ? new StoryMenuState() : new FreeplayState());
+        }
+    }
 
-		super.destroy();
-	}
+    override function destroy()
+    {
+        gameoverScript.call("destroy");
+        gameoverScript.destroy();
+
+        super.destroy();
+    }
 }
