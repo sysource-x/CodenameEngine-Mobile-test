@@ -38,7 +38,7 @@
 	<window if="mac" allow-high-dpi="true" />
 
 	<!--Mobile-specific-->
-	<window if="mobile" orientation="landscape" fullscreen="true" resizable="false" allow-shaders="true" require-shaders="true" allow-high-dpi="true" 
+	<window if="mobile" orientation="landscape" fullscreen="true" resizable="false" allow-shaders="true" require-shaders="true" allow-high-dpi="true" />
 
 	<!--Switch-specific-->
 	<window if="switch" orientation="landscape" fullscreen="true" width="0" height="0" resizable="true" />
@@ -65,7 +65,7 @@
 	</section>
 
 	<assets path='mods' rename='mods' embed='false'/>
-	<assets path='art/readme.txt' rename='do NOT readme.txt' />
+	<assets path='art/readme.txt' rename='do NOT readme.txt' unless="mobile" />
 
 	<!-- OpenAL config -->
 	<section if="desktop">
@@ -86,9 +86,19 @@
 
 	<!--Place custom nodes like icons here (higher priority to override the HaxeFlixel icon)-->
 	<icon path="art/icon16.png" size='16'/>
+	<icon path="art/icon32.png" size='24'/>
 	<icon path="art/icon32.png" size='32'/>
+	<icon path="art/icon64.png" size='40'/>
+	<icon path="art/icon64.png" size='48'/>
 	<icon path="art/icon64.png" size='64'/>
-	<icon path="art/iconOG.png" />
+	<icon path="art/iconOG.png" size='96' />
+	<icon path="art/iconOG.png" size='128' />
+	<icon path="art/iconOG.png" size='196' />
+	<icon path="art/iconOG.png" size='256' />
+	<icon path="art/iconOG.png" size='512' />
+	<icon path="art/iconOG.png" size='768' />
+	<icon path="art/iconOG.png" size='1024' />
+	<icon path="art/iconOG.png" if="mobile" />
 
 	<!-- _________________________________ Engine Settings _______________________________ -->
 
@@ -203,4 +213,10 @@
 	<haxedef name="HXCPP_CATCH_SEGV" />
 
 	<haxedef name="hscriptPos" /> <!-- for logging -->
+
+	<!-- _________________________________ Mobile stuff _______________________________ -->
+
+	<!-- Do whatever you want I'm tired uninstall and install everytime -->
+	<certificate path="key.keystore" password="codenameengine" alias="cneport" alias-password="codenameengine" if="android" unless="debug" />
+
 </project>
