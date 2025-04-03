@@ -21,16 +21,26 @@ class ScriptedAssetLibrary extends ModsFolderLibrary {
 	public var scriptName:String;
 	private static var nullValue:Dynamic = {};
 
-	public function new(scriptName:String, args:Array<Dynamic> = null, folderPath:String="./assets/", libName:String="assets", ?modName:String) {
-		if(modName == null) modName = scriptName;
+	public function new(scriptName:String, args:Array<Dynamic> = null, folderPath:String = "assets/", libName:String = "assets", ?modName:String) {
+		/*
+		folderPath forever "assets/"
+		var library = new ScriptedAssetLibrary("exampleScript"); create a new library
+		*/
+		if (folderPath == null) folderPath = "assets/";
+
+		if (modName == null) modName = scriptName;
 		super(folderPath, libName, modName);
+
+		// script associed configured
 		this.scriptName = scriptName;
 		script = Script.create(Paths.script("data/library/" + scriptName));
 		script.setParent(this);
-		script.set("NULL", nullValue); // hackyway
+		script.set("NULL", nullValue); // null value for script
 		script.load();
-		if(args == null) args = [];
+
+		if (args == null) args = [];
 		script.call("create", args);
+
 		trace(script);
 	}
 

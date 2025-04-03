@@ -102,6 +102,12 @@ class HScript extends Script {
 		var err = error.toString();
 		if (err.startsWith(fn)) err = err.substr(fn.length);
 
+		#if mobile
+		if (fn.startsWith("assets/")) {
+			funkin.backend.utils.NativeAPI.showMessageBox("HSCRIPT ERROR", "Script Error in: " + fn + "\nDetails: " + err, MSG_ERROR);
+		}
+		#end
+
 		Logs.traceColored([
 			Logs.logText(fn, GREEN),
 			Logs.logText(err, RED)

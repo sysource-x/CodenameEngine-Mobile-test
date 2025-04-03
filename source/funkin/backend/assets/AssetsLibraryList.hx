@@ -162,6 +162,21 @@ class AssetsLibraryList extends AssetLibrary {
 		libraries.insert(0, lib);
 		return lib;
 	}
+
+	override public function list(type:String):Array<String> {
+		var items = [];
+
+		// Itera apenas pelas bibliotecas internas
+		for (library in libraries) {
+			var libraryItems = library.list(type);
+
+			if (libraryItems != null) {
+				items = items.concat(libraryItems);
+			}
+		}
+
+		return items;
+	}
 }
 
 enum abstract AssetSource(Null<Bool>) from Bool from Null<Bool> to Null<Bool> {

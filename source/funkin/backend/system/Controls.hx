@@ -10,6 +10,10 @@ import flixel.input.gamepad.FlxGamepadButton;
 import flixel.input.gamepad.FlxGamepadInputID;
 import flixel.input.keyboard.FlxKey;
 
+#if TOUCH_CONTROLS
+import mobile.funkin.backend.system.input.MobileInputID;
+#end
+
 enum abstract Action(String) to String from String {
 	var UP = "up";
 	var LEFT = "left";
@@ -90,6 +94,15 @@ enum KeyboardScheme
 @:noCustomClass
 class Controls extends FlxActionSet
 {
+	public static var instance:Controls;
+
+	public var touchControlsEnabled(get, never):Bool;
+
+	@:noCompletion
+	private function get_touchControlsEnabled():Bool {
+		return #if TOUCH_CONTROLS Options.touchPadAlpha > 0.0 #else false #end;
+	}
+
 	var _up = new FlxActionDigital(Action.UP);
 	var _left = new FlxActionDigital(Action.LEFT);
 	var _right = new FlxActionDigital(Action.RIGHT);
@@ -375,6 +388,8 @@ class Controls extends FlxActionSet
 	public function new(name, scheme = None)
 	{
 		super(name);
+
+		instance = this;
 
 		add(_up);
 		add(_left);
@@ -895,5 +910,67 @@ class Controls extends FlxActionSet
 	inline static function isGamepad(input:FlxActionInput, deviceID:Int)
 	{
 		return input.device == GAMEPAD && (deviceID == FlxInputDeviceID.ALL || input.deviceID == deviceID);
+	}
+
+	public function isControlPressed(id:MobileInputID):Bool {
+		#if TOUCH_CONTROLS
+		return checkMobileControl(id, "pressed");
+		#else
+		return false;
+		#end
+	}
+
+	public function isControlJustPressed(id:MobileInputID):Bool {
+		#if TOUCH_CONTROLS
+		return checkMobileControl(id, "justPressed");
+		#else
+		return false;
+		#end
+	}
+
+	public function isControlReleased(id:MobileInputID):Bool {
+		#if TOUCH_CONTROLS
+		return checkMobileControl(id, "released");
+		#else
+		return false;
+		#end
+	}
+
+	public function isControlJustReleased(id:MobileInputID):Bool {
+		#if TOUCH_CONTROLS
+		return checkMobileControl(id, "justReleased");
+		#else
+		return false;
+		#end
+	}
+
+	private function checkMobileControl(id:MobileInputID, action:String):Bool {
+		#if TOUCH_CONTROLS
+		var state = MusicBeatState.getState();
+		var substate = MusicBeatSubstate.instance;
+		var results:Array<Bool> = [];
+
+		if (state != null) {
+			if (state.touchPad != null) {
+				results.push(callTouchPadAction(state.touchPad, id, action));
+			}
+			if (state.hitbox != null) {
+				results.push(callHitboxAction(state.hitbox.instance, id, action));
+			}
+		}
+
+		if (substate != null) {
+			if (substate.touchPad != null) {
+				results.push(callTouchPadAction(substate.touchPad, id, action));
+			}
+			if (substate.hitbox != null) {
+				results.push(callHitboxAction(substate.hitbox.instance, id, action));
+			}
+		}
+
+		return results.indexOf(true) != -1;
+		#else
+		return false;
+		#end
 	}
 }

@@ -13,281 +13,245 @@ import funkin.backend.system.interfaces.IBeatReceiver;
 import funkin.backend.system.Conductor;
 import funkin.options.PlayerSettings;
 
-class MusicBeatState extends FlxState implements IBeatReceiver
-{
-	private var lastBeat:Float = 0;
-	private var lastStep:Float = 0;
+#if TOUCH_CONTROLS
+/*
+@author of the code is sysource_xyz and HomuHomu of github images mobile.pngs (i rob sorry:(...)
+*/
+import mobile.funkin.backend.utils.MobileData;
+import mobile.objects.Hitbox;
+import mobile.objects.TouchPad;
+import flixel.FlxCamera;
+import flixel.util.FlxDestroyUtil;
+#end
 
-	/**
-	 * Dummy sprite used to cache graphics to GPU.
-	 */
-	public var graphicCache:GraphicCacheSprite = new GraphicCacheSprite();
-	/**
-	 * Whenever the Conductor auto update should be enabled or not.
-	 */
-	public var cancelConductorUpdate:Bool = false;
+class MusicBeatState extends FlxState implements IBeatReceiver {
+    private var lastBeat:Float = 0;
+    private var lastStep:Float = 0;
 
-	/**
-	 * Current step
-	 */
-	public var curStep(get, never):Int;
-	/**
-	 * Current beat
-	 */
-	public var curBeat(get, never):Int;
-	/**
-	 * Current beat
-	 */
-	public var curMeasure(get, never):Int;
-	/**
-	 * Current step, as a `Float` (ex: 4.94, instead of 4)
-	 */
-	public var curStepFloat(get, never):Float;
-	/**
-	 * Current beat, as a `Float` (ex: 1.24, instead of 1)
-	 */
-	public var curBeatFloat(get, never):Float;
-	/**
-	 * Current beat, as a `Float` (ex: 1.24, instead of 1)
-	 */
-	public var curMeasureFloat(get, never):Float;
-	/**
-	 * Current song position (in milliseconds).
-	 */
-	public var songPos(get, never):Float;
+    public var graphicCache:GraphicCacheSprite = new GraphicCacheSprite();
 
-	inline function get_curStep():Int
-		return Conductor.curStep;
-	inline function get_curBeat():Int
-		return Conductor.curBeat;
-	inline function get_curMeasure():Int
-		return Conductor.curMeasure;
-	inline function get_curStepFloat():Float
-		return Conductor.curStepFloat;
-	inline function get_curBeatFloat():Float
-		return Conductor.curBeatFloat;
-	inline function get_curMeasureFloat():Float
-		return Conductor.curMeasureFloat;
-	inline function get_songPos():Float
-		return Conductor.songPosition;
+    #if TOUCH_CONTROLS
+    public var touchPad:TouchPad;
+    public var hitbox:Hitbox;
+    public var hboxCam:FlxCamera;
+    public var tpadCam:FlxCamera;
+    #end
 
-	/**
-	 * Game Controls. (All players / Solo)
-	 */
-	public var controls(get, never):Controls;
+    public var cancelConductorUpdate:Bool = false;
 
-	/**
-	 * Game Controls (Player 1 only)
-	 */
-	public var controlsP1(get, never):Controls;
+    public var curStep(get, never):Int;
+    public var curBeat(get, never):Int;
+    public var curMeasure(get, never):Int;
+    public var curStepFloat(get, never):Float;
+    public var curBeatFloat(get, never):Float;
+    public var curMeasureFloat(get, never):Float;
+    public var songPos(get, never):Float;
 
-	/**
-	 * Game Controls (Player 2 only)
-	 */
-	public var controlsP2(get, never):Controls;
+    inline function get_curStep():Int
+        return Conductor.curStep;
+    inline function get_curBeat():Int
+        return Conductor.curBeat;
+    inline function get_curMeasure():Int
+        return Conductor.curMeasure;
+    inline function get_curStepFloat():Float
+        return Conductor.curStepFloat;
+    inline function get_curBeatFloat():Float
+        return Conductor.curBeatFloat;
+    inline function get_curMeasureFloat():Float
+        return Conductor.curMeasureFloat;
+    inline function get_songPos():Float
+        return Conductor.songPosition;
 
-	/**
-	 * Current injected script attached to the state. To add one, create a file at path "data/states/stateName" (ex: data/states/FreeplayState)
-	 */
-	public var stateScripts:ScriptPack;
+    public var controls(get, never):Controls;
+    public var controlsP1(get, never):Controls;
+    public var controlsP2(get, never):Controls;
 
-	public var scriptsAllowed:Bool = true;
+    public var stateScripts:ScriptPack;
+    public var scriptsAllowed:Bool = true;
 
-	public static var lastScriptName:String = null;
-	public static var lastStateName:String = null;
+    public static var lastScriptName:String = null;
+    public static var lastStateName:String = null;
 
-	public var scriptName:String = null;
+    public var scriptName:String = null;
 
-	public static var skipTransOut:Bool = false;
-	public static var skipTransIn:Bool = false;
+    public static var skipTransOut:Bool = false;
+    public static var skipTransIn:Bool = false;
 
-	inline function get_controls():Controls
-		return PlayerSettings.solo.controls;
-	inline function get_controlsP1():Controls
-		return PlayerSettings.player1.controls;
-	inline function get_controlsP2():Controls
-		return PlayerSettings.player2.controls;
+    inline function get_controls():Controls
+        return PlayerSettings.solo.controls;
+    inline function get_controlsP1():Controls
+        return PlayerSettings.player1.controls;
+    inline function get_controlsP2():Controls
+        return PlayerSettings.player2.controls;
 
-	public function new(scriptsAllowed:Bool = true, ?scriptName:String) {
-		super();
-		this.scriptsAllowed = #if SOFTCODED_STATES scriptsAllowed #else false #end;
+    public function new(scriptsAllowed:Bool = true, ?scriptName:String) {
+        super();
+        this.scriptsAllowed = #if SOFTCODED_STATES scriptsAllowed #else false #end;
 
-		if(lastStateName != (lastStateName = Type.getClassName(Type.getClass(this)))) {
-			lastScriptName = null;
-		}
-		this.scriptName = scriptName != null ? scriptName : lastScriptName;
-		lastScriptName = this.scriptName;
-	}
+        if (lastStateName != (lastStateName = Type.getClassName(Type.getClass(this)))) {
+            lastScriptName = null;
+        }
+        this.scriptName = scriptName != null ? scriptName : lastScriptName;
+        lastScriptName = this.scriptName;
+    }
 
-	function loadScript() {
-		var className = Type.getClassName(Type.getClass(this));
-		if (stateScripts == null)
-			(stateScripts = new ScriptPack(className)).setParent(this);
-		if (scriptsAllowed) {
-			if (stateScripts.scripts.length == 0) {
-				var scriptName = this.scriptName != null ? this.scriptName : className.substr(className.lastIndexOf(".")+1);
-				for (i in funkin.backend.assets.ModsFolder.getLoadedMods()) {
-					var path = Paths.script('data/states/${scriptName}/LIB_$i');
-					var script = Script.create(path);
-					if (script is DummyScript) continue;
-					script.remappedNames.set(script.fileName, '$i:${script.fileName}');
-					stateScripts.add(script);
-					script.load();
-				}
-			}
-			else stateScripts.reload();
-		}
-	}
+    function loadScript() {
+        var className = Type.getClassName(Type.getClass(this));
+        if (stateScripts == null)
+            (stateScripts = new ScriptPack(className)).setParent(this);
+        if (scriptsAllowed) {
+            if (stateScripts.scripts.length == 0) {
+                var scriptName = this.scriptName != null ? this.scriptName : className.substr(className.lastIndexOf(".") + 1);
+                for (i in funkin.backend.assets.ModsFolder.getLoadedMods()) {
+                    var path = Paths.script('data/states/${scriptName}/LIB_$i');
+                    var script = Script.create(path);
+                    if (script is DummyScript) continue;
+                    script.remappedNames.set(script.fileName, '$i:${script.fileName}');
+                    stateScripts.add(script);
+                    script.load();
+                }
+            } else stateScripts.reload();
+        }
+    }
 
-	public override function tryUpdate(elapsed:Float):Void
-	{
-		if (persistentUpdate || subState == null) {
-			call("preUpdate", [elapsed]);
-			update(elapsed);
-			call("postUpdate", [elapsed]);
-		}
+    public override function tryUpdate(elapsed:Float):Void {
+        if (persistentUpdate || subState == null) {
+            call("preUpdate", [elapsed]);
+            update(elapsed);
+            call("postUpdate", [elapsed]);
+        }
 
-		if (_requestSubStateReset)
-		{
-			_requestSubStateReset = false;
-			resetSubState();
-		}
-		if (subState != null)
-		{
-			subState.tryUpdate(elapsed);
-		}
-	}
-	override function create()
-	{
-		loadScript();
-		Framerate.offset.y = 0;
-		super.create();
-		call("create");
-	}
+        if (_requestSubStateReset) {
+            _requestSubStateReset = false;
+            resetSubState();
+        }
+        if (subState != null) {
+            subState.tryUpdate(elapsed);
+        }
+    }
 
-	public override function createPost() {
-		super.createPost();
-		persistentUpdate = true;
-		call("postCreate");
-		if (!skipTransIn)
-			openSubState(new MusicBeatTransition(null));
-		skipTransIn = false;
-		skipTransOut = false;
-	}
-	public function call(name:String, ?args:Array<Dynamic>, ?defaultVal:Dynamic):Dynamic {
-		// calls the function on the assigned script
-		if(stateScripts != null)
-			return stateScripts.call(name, args);
-		return defaultVal;
-	}
+    override function create() {
+        loadScript();
+        Framerate.offset.y = 0;
+        super.create();
+        call("create");
+    }
 
-	public function event<T:CancellableEvent>(name:String, event:T):T {
-		if(stateScripts != null)
-			stateScripts.call(name, [event]);
-		return event;
-	}
+    public override function createPost() {
+        super.createPost();
+        persistentUpdate = true;
+        call("postCreate");
+        if (!skipTransIn)
+            openSubState(new MusicBeatTransition(null));
+        skipTransIn = false;
+        skipTransOut = false;
+    }
 
-	override function update(elapsed:Float)
-	{
-		// TODO: DEBUG MODE!!
-		if (FlxG.keys.justPressed.F5) {
-			loadScript();
-		}
-		call("update", [elapsed]);
+    public function call(name:String, ?args:Array<Dynamic>, ?defaultVal:Dynamic):Dynamic {
+        if (stateScripts != null)
+            return stateScripts.call(name, args);
+        return defaultVal;
+    }
 
-		super.update(elapsed);
-	}
+    public function event<T:CancellableEvent>(name:String, event:T):T {
+        if (stateScripts != null)
+            stateScripts.call(name, [event]);
+        return event;
+    }
 
-	@:dox(hide) public function stepHit(curStep:Int):Void
-	{
-		for(e in members) if (e != null && e is IBeatReceiver) cast(e, IBeatReceiver).stepHit(curStep);
-		call("stepHit", [curStep]);
-	}
+    override function update(elapsed:Float) {
+        if (FlxG.keys.justPressed.F5) {
+            loadScript();
+        }
+        call("update", [elapsed]);
 
-	@:dox(hide) public function beatHit(curBeat:Int):Void
-	{
-		for(e in members) if (e != null && e is IBeatReceiver) cast(e, IBeatReceiver).beatHit(curBeat);
-		call("beatHit", [curBeat]);
-	}
+        super.update(elapsed);
+    }
 
-	@:dox(hide) public function measureHit(curMeasure:Int):Void
-	{
-		for(e in members) if (e != null && e is IBeatReceiver) cast(e, IBeatReceiver).measureHit(curMeasure);
-		call("measureHit", [curMeasure]);
-	}
+    public override function destroy() {
+        #if TOUCH_CONTROLS
+        removeTouchPad();
+        removeHitbox();
+        #end
 
-	/**
-	 * Shortcut to `FlxMath.lerp` or `CoolUtil.lerp`, depending on `fpsSensitive`
-	 * @param v1 Value 1
-	 * @param v2 Value 2
-	 * @param ratio Ratio
-	 * @param fpsSensitive Whenever the ratio should not be adjusted to run at the same speed independent of framerate.
-	 */
-	public function lerp(v1:Float, v2:Float, ratio:Float, fpsSensitive:Bool = false) {
-		if (fpsSensitive)
-			return FlxMath.lerp(v1, v2, ratio);
-		else
-			return CoolUtil.fpsLerp(v1, v2, ratio);
-	}
+        super.destroy();
+        graphicCache.destroy();
+        call("destroy");
+        stateScripts = FlxDestroyUtil.destroy(stateScripts);
+    }
 
-	/**
-	 * SCRIPTING STUFF
-	 */
-	public override function openSubState(subState:FlxSubState) {
-		var e = event("onOpenSubState", EventManager.get(StateEvent).recycle(subState));
-		if (!e.cancelled)
-			super.openSubState(subState);
-	}
+    public function addTouchPad(DPad:String, Action:String):Void {
+        #if TOUCH_CONTROLS
+        touchPad = new TouchPad(DPad, Action);
+        add(touchPad);
+        #end
+    }
 
-	public override function onResize(w:Int, h:Int) {
-		super.onResize(w, h);
-		event("onResize", EventManager.get(ResizeEvent).recycle(w, h, null, null));
-	}
+    public function removeTouchPad():Void {
+        #if TOUCH_CONTROLS
+        if (touchPad != null) {
+            remove(touchPad);
+            touchPad = FlxDestroyUtil.destroy(touchPad);
+        }
 
-	public override function destroy() {
-		super.destroy();
-		graphicCache.destroy();
-		call("destroy");
-		stateScripts = FlxDestroyUtil.destroy(stateScripts);
-	}
+        if (tpadCam != null) {
+            FlxG.cameras.remove(tpadCam);
+            tpadCam = FlxDestroyUtil.destroy(tpadCam);
+        }
+        #end
+    }
 
-	public override function draw() {
-		graphicCache.draw();
-		var e = event("draw", EventManager.get(DrawEvent).recycle());
-		if (!e.cancelled)
-			super.draw();
-		event("postDraw", e);
-	}
+    public function addHitbox(?defaultDrawTarget:Bool = false):Void {
+        #if TOUCH_CONTROLS
+        hitbox = new Hitbox(Options.extraHints);
 
-	public override function switchTo(nextState:FlxState) {
-		var e = event("onStateSwitch", EventManager.get(StateEvent).recycle(nextState));
-		if (e.cancelled)
-			return false;
+        hboxCam = new FlxCamera();
+        hboxCam.bgColor.alpha = 0;
+        FlxG.cameras.add(hboxCam, defaultDrawTarget);
 
-		if (skipTransOut)
-			return true;
-		if (subState is MusicBeatTransition && cast(subState, MusicBeatTransition).newState != null)
-			return true;
-		openSubState(new MusicBeatTransition(nextState));
-		persistentUpdate = false;
-		return false;
-	}
+        hitbox.cameras = [hboxCam];
+        hitbox.visible = false;
+        add(hitbox);
+        #end
+    }
 
-	public override function onFocus() {
-		super.onFocus();
-		call("onFocus");
-	}
+    public function removeHitbox():Void {
+        #if TOUCH_CONTROLS
+        if (hitbox != null) {
+            remove(hitbox);
+            hitbox = FlxDestroyUtil.destroy(hitbox);
+        }
 
-	public override function onFocusLost() {
-		super.onFocusLost();
-		call("onFocusLost");
-	}
+        if (hboxCam != null) {
+            FlxG.cameras.remove(hboxCam);
+            hboxCam = FlxDestroyUtil.destroy(hboxCam);
+        }
+        #end
+    }
 
-	public override function resetSubState() {
-		super.resetSubState();
-		if (subState != null && subState is MusicBeatSubstate) {
-			cast(subState, MusicBeatSubstate).parent = this;
-			cast(subState, MusicBeatSubstate).onSubstateOpen();
-		}
-	}
+    public function addTouchPadCamera(?defaultDrawTarget:Bool = false):Void {
+        #if TOUCH_CONTROLS
+        if (touchPad != null) {
+            tpadCam = new FlxCamera();
+            tpadCam.bgColor.alpha = 0;
+            FlxG.cameras.add(tpadCam, defaultDrawTarget);
+            touchPad.cameras = [tpadCam];
+        }
+        #end
+    }
+
+    public function setTouchPadMode(DPadMode:String, ActionMode:String, ?addCamera:Bool = false):Void {
+        #if TOUCH_CONTROLS
+        if (touchPad == null) return;
+        removeTouchPad();
+        addTouchPad(DPadMode, ActionMode);
+        if (addCamera) {
+            addTouchPadCamera();
+        }
+        #end
+    }
+
+    public static function getState():MusicBeatState {
+        return cast (FlxG.state, MusicBeatState);
+    }
 }
