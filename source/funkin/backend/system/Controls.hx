@@ -9,7 +9,6 @@ import flixel.input.actions.FlxActionSet;
 import flixel.input.gamepad.FlxGamepadButton;
 import flixel.input.gamepad.FlxGamepadInputID;
 import flixel.input.keyboard.FlxKey;
-
 #if TOUCH_CONTROLS
 import mobile.funkin.backend.system.input.MobileInputID;
 #end
@@ -94,15 +93,6 @@ enum KeyboardScheme
 @:noCustomClass
 class Controls extends FlxActionSet
 {
-	public static var instance:Controls;
-
-	public var touchControlsEnabled(get, never):Bool;
-
-	@:noCompletion
-	private function get_touchControlsEnabled():Bool {
-		return #if TOUCH_CONTROLS Options.touchPadAlpha > 0.0 #else false #end;
-	}
-
 	var _up = new FlxActionDigital(Action.UP);
 	var _left = new FlxActionDigital(Action.LEFT);
 	var _right = new FlxActionDigital(Action.RIGHT);
@@ -148,7 +138,7 @@ class Controls extends FlxActionSet
 	public var UP(get, set):Bool;
 
 	inline function get_UP()
-		return _up.check();
+		return _up.check() #if TOUCH_CONTROLS || mobileControlsPressed(MobileInputID.UP) #end;
 
 	inline function set_UP(val)
 		return @:privateAccess _up._checked = val;
@@ -156,7 +146,7 @@ class Controls extends FlxActionSet
 	public var LEFT(get, set):Bool;
 
 	inline function get_LEFT()
-		return _left.check();
+		return _left.check() #if TOUCH_CONTROLS || mobileControlsPressed(MobileInputID.LEFT) #end;
 
 	inline function set_LEFT(val)
 		return @:privateAccess _left._checked = val;
@@ -164,7 +154,7 @@ class Controls extends FlxActionSet
 	public var RIGHT(get, set):Bool;
 
 	inline function get_RIGHT()
-		return _right.check();
+		return _right.check() #if TOUCH_CONTROLS || mobileControlsPressed(MobileInputID.RIGHT) #end;
 
 	inline function set_RIGHT(val)
 		return @:privateAccess _right._checked = val;
@@ -172,7 +162,7 @@ class Controls extends FlxActionSet
 	public var DOWN(get, set):Bool;
 
 	inline function get_DOWN()
-		return _down.check();
+		return _down.check() #if TOUCH_CONTROLS || mobileControlsPressed(MobileInputID.DOWN) #end;
 
 	inline function set_DOWN(val)
 		return @:privateAccess _down._checked = val;
@@ -180,7 +170,7 @@ class Controls extends FlxActionSet
 	public var UP_P(get, set):Bool;
 
 	inline function get_UP_P()
-		return _upP.check();
+		return _upP.check() #if TOUCH_CONTROLS || mobileControlsJustPressed(MobileInputID.UP) #end;
 
 	inline function set_UP_P(val)
 		return @:privateAccess _upP._checked = val;
@@ -188,7 +178,7 @@ class Controls extends FlxActionSet
 	public var LEFT_P(get, set):Bool;
 
 	inline function get_LEFT_P()
-		return _leftP.check();
+		return _leftP.check() #if TOUCH_CONTROLS || mobileControlsJustPressed(MobileInputID.LEFT) #end;
 
 	inline function set_LEFT_P(val)
 		return @:privateAccess _leftP._checked = val;
@@ -196,7 +186,7 @@ class Controls extends FlxActionSet
 	public var RIGHT_P(get, set):Bool;
 
 	inline function get_RIGHT_P()
-		return _rightP.check();
+		return _rightP.check() #if TOUCH_CONTROLS || mobileControlsJustPressed(MobileInputID.RIGHT) #end;
 
 	inline function set_RIGHT_P(val)
 		return @:privateAccess _rightP._checked = val;
@@ -204,7 +194,7 @@ class Controls extends FlxActionSet
 	public var DOWN_P(get, set):Bool;
 
 	inline function get_DOWN_P()
-		return _downP.check();
+		return _downP.check() #if TOUCH_CONTROLS || mobileControlsJustPressed(MobileInputID.DOWN) #end;
 
 	inline function set_DOWN_P(val)
 		return @:privateAccess _downP._checked = val;
@@ -212,7 +202,7 @@ class Controls extends FlxActionSet
 	public var UP_R(get, set):Bool;
 
 	inline function get_UP_R()
-		return _upR.check();
+		return _upR.check() #if TOUCH_CONTROLS || mobileControlsJustReleased(MobileInputID.UP) #end;
 
 	inline function set_UP_R(val)
 		return @:privateAccess _upR._checked = val;
@@ -220,7 +210,7 @@ class Controls extends FlxActionSet
 	public var LEFT_R(get, set):Bool;
 
 	inline function get_LEFT_R()
-		return _leftR.check();
+		return _leftR.check() #if TOUCH_CONTROLS || mobileControlsJustReleased(MobileInputID.LEFT) #end;
 
 	inline function set_LEFT_R(val)
 		return @:privateAccess _leftR._checked = val;
@@ -228,7 +218,7 @@ class Controls extends FlxActionSet
 	public var RIGHT_R(get, set):Bool;
 
 	inline function get_RIGHT_R()
-		return _rightR.check();
+		return _rightR.check() #if TOUCH_CONTROLS || mobileControlsJustReleased(MobileInputID.RIGHT) #end;
 
 	inline function set_RIGHT_R(val)
 		return @:privateAccess _rightR._checked = val;
@@ -236,7 +226,7 @@ class Controls extends FlxActionSet
 	public var DOWN_R(get, set):Bool;
 
 	inline function get_DOWN_R()
-		return _downR.check();
+		return _downR.check() #if TOUCH_CONTROLS || mobileControlsJustReleased(MobileInputID.DOWN) #end;
 
 	inline function set_DOWN_R(val)
 		return @:privateAccess _downR._checked = val;
@@ -244,7 +234,7 @@ class Controls extends FlxActionSet
 	public var NOTE_UP(get, set):Bool;
 
 	inline function get_NOTE_UP()
-		return _noteUp.check();
+		return _noteUp.check() #if TOUCH_CONTROLS || mobileControlsPressed(MobileInputID.HITBOX_UP) #end;
 
 	inline function set_NOTE_UP(val)
 		return @:privateAccess _noteUp._checked = val;
@@ -252,7 +242,7 @@ class Controls extends FlxActionSet
 	public var NOTE_LEFT(get, set):Bool;
 
 	inline function get_NOTE_LEFT()
-		return _noteLeft.check();
+		return _noteLeft.check() #if TOUCH_CONTROLS || mobileControlsPressed(MobileInputID.HITBOX_LEFT) #end;
 
 	inline function set_NOTE_LEFT(val)
 		return @:privateAccess _noteLeft._checked = val;
@@ -260,7 +250,7 @@ class Controls extends FlxActionSet
 	public var NOTE_RIGHT(get, set):Bool;
 
 	inline function get_NOTE_RIGHT()
-		return _noteRight.check();
+		return _noteRight.check() #if TOUCH_CONTROLS || mobileControlsPressed(MobileInputID.HITBOX_RIGHT) #end;
 
 	inline function set_NOTE_RIGHT(val)
 		return @:privateAccess _noteRight._checked = val;
@@ -268,7 +258,7 @@ class Controls extends FlxActionSet
 	public var NOTE_DOWN(get, set):Bool;
 
 	inline function get_NOTE_DOWN()
-		return _noteDown.check();
+		return _noteDown.check() #if TOUCH_CONTROLS || mobileControlsPressed(MobileInputID.HITBOX_DOWN) #end;
 
 	inline function set_NOTE_DOWN(val)
 		return @:privateAccess _noteDown._checked = val;
@@ -276,7 +266,7 @@ class Controls extends FlxActionSet
 	public var NOTE_UP_P(get, set):Bool;
 
 	inline function get_NOTE_UP_P()
-		return _noteUpP.check();
+		return _noteUpP.check() #if TOUCH_CONTROLS || mobileControlsJustPressed(MobileInputID.HITBOX_UP) #end;
 
 	inline function set_NOTE_UP_P(val)
 		return @:privateAccess _noteUpP._checked = val;
@@ -284,7 +274,7 @@ class Controls extends FlxActionSet
 	public var NOTE_LEFT_P(get, set):Bool;
 
 	inline function get_NOTE_LEFT_P()
-		return _noteLeftP.check();
+		return _noteLeftP.check() #if TOUCH_CONTROLS || mobileControlsJustPressed(MobileInputID.HITBOX_LEFT) #end;
 
 	inline function set_NOTE_LEFT_P(val)
 		return @:privateAccess _noteLeftP._checked = val;
@@ -292,7 +282,7 @@ class Controls extends FlxActionSet
 	public var NOTE_RIGHT_P(get, set):Bool;
 
 	inline function get_NOTE_RIGHT_P()
-		return _noteRightP.check();
+		return _noteRightP.check() #if TOUCH_CONTROLS || mobileControlsJustPressed(MobileInputID.HITBOX_RIGHT) #end;
 
 	inline function set_NOTE_RIGHT_P(val)
 		return @:privateAccess _noteRightP._checked = val;
@@ -300,7 +290,7 @@ class Controls extends FlxActionSet
 	public var NOTE_DOWN_P(get, set):Bool;
 
 	inline function get_NOTE_DOWN_P()
-		return _noteDownP.check();
+		return _noteDownP.check() #if TOUCH_CONTROLS || mobileControlsJustPressed(MobileInputID.HITBOX_DOWN) #end;
 
 	inline function set_NOTE_DOWN_P(val)
 		return @:privateAccess _noteDownP._checked = val;
@@ -308,7 +298,7 @@ class Controls extends FlxActionSet
 	public var NOTE_UP_R(get, set):Bool;
 
 	inline function get_NOTE_UP_R()
-		return _noteUpR.check();
+		return _noteUpR.check() #if TOUCH_CONTROLS || mobileControlsJustReleased(MobileInputID.HITBOX_UP) #end;
 
 	inline function set_NOTE_UP_R(val)
 		return @:privateAccess _noteUpR._checked = val;
@@ -316,7 +306,7 @@ class Controls extends FlxActionSet
 	public var NOTE_LEFT_R(get, set):Bool;
 
 	inline function get_NOTE_LEFT_R()
-		return _noteLeftR.check();
+		return _noteLeftR.check() #if TOUCH_CONTROLS || mobileControlsJustReleased(MobileInputID.HITBOX_LEFT) #end;
 
 	inline function set_NOTE_LEFT_R(val)
 		return @:privateAccess _noteLeftR._checked = val;
@@ -324,7 +314,7 @@ class Controls extends FlxActionSet
 	public var NOTE_RIGHT_R(get, set):Bool;
 
 	inline function get_NOTE_RIGHT_R()
-		return _noteRightR.check();
+		return _noteRightR.check() #if TOUCH_CONTROLS || mobileControlsJustReleased(MobileInputID.HITBOX_RIGHT) #end;
 
 	inline function set_NOTE_RIGHT_R(val)
 		return @:privateAccess _noteRightR._checked = val;
@@ -332,7 +322,7 @@ class Controls extends FlxActionSet
 	public var NOTE_DOWN_R(get, set):Bool;
 
 	inline function get_NOTE_DOWN_R()
-		return _noteDownR.check();
+		return _noteDownR.check() #if TOUCH_CONTROLS || mobileControlsJustReleased(MobileInputID.HITBOX_DOWN) #end;
 
 	inline function set_NOTE_DOWN_R(val)
 		return @:privateAccess _noteDownR._checked = val;
@@ -340,7 +330,7 @@ class Controls extends FlxActionSet
 	public var ACCEPT(get, set):Bool;
 
 	inline function get_ACCEPT()
-		return _accept.check();
+		return _accept.check() #if TOUCH_CONTROLS || mobileControlsJustPressed(MobileInputID.A) #end;
 
 	inline function set_ACCEPT(val)
 		return @:privateAccess _accept._checked = val;
@@ -348,7 +338,7 @@ class Controls extends FlxActionSet
 	public var BACK(get, set):Bool;
 
 	inline function get_BACK()
-		return _back.check();
+		return _back.check() #if TOUCH_CONTROLS || mobileControlsJustPressed(MobileInputID.B) #end;
 
 	inline function set_BACK(val)
 		return @:privateAccess _back._checked = val;
@@ -356,7 +346,7 @@ class Controls extends FlxActionSet
 	public var PAUSE(get, set):Bool;
 
 	inline function get_PAUSE()
-		return _pause.check();
+		return _pause.check() #if TOUCH_CONTROLS || mobileControlsJustPressed(MobileInputID.P) #end;
 
 	inline function set_PAUSE(val)
 		return @:privateAccess _pause._checked = val;
@@ -385,10 +375,11 @@ class Controls extends FlxActionSet
 	inline function set_SWITCHMOD(val)
 		return @:privateAccess _switchMod._checked = val;
 
+	public static var instance:Controls;
+
 	public function new(name, scheme = None)
 	{
 		super(name);
-
 		instance = this;
 
 		add(_up);
@@ -434,6 +425,12 @@ class Controls extends FlxActionSet
 	{
 		super.update();
 	}
+	
+	public var touchC(get, never):Bool;
+	
+	@:noCompletion
+	private function get_touchC():Bool
+		return #if TOUCH_CONTROLS Options.touchPadAlpha >= 0.1 #else false #end;
 
 	// inline
 	public function checkByName(name:Action):Bool
@@ -912,65 +909,113 @@ class Controls extends FlxActionSet
 		return input.device == GAMEPAD && (deviceID == FlxInputDeviceID.ALL || input.deviceID == deviceID);
 	}
 
-	public function isControlPressed(id:MobileInputID):Bool {
-		#if TOUCH_CONTROLS
-		return checkMobileControl(id, "pressed");
-		#else
-		return false;
-		#end
-	}
+	#if TOUCH_CONTROLS
+	public function mobileControlsJustPressed(id:MobileInputID):Bool
+	{
+		final state:MusicBeatState = MusicBeatState.getState();
+		final substate:MusicBeatSubstate = MusicBeatSubstate.instance;
+		var bools:Array<Bool> = [false, false, false, false];
 
-	public function isControlJustPressed(id:MobileInputID):Bool {
-		#if TOUCH_CONTROLS
-		return checkMobileControl(id, "justPressed");
-		#else
-		return false;
-		#end
-	}
+		if (state != null)
+		{
+			if (state.touchPad != null)
+				bools[0] = state.touchPad.buttonJustPressed(id);
 
-	public function isControlReleased(id:MobileInputID):Bool {
-		#if TOUCH_CONTROLS
-		return checkMobileControl(id, "released");
-		#else
-		return false;
-		#end
-	}
-
-	public function isControlJustReleased(id:MobileInputID):Bool {
-		#if TOUCH_CONTROLS
-		return checkMobileControl(id, "justReleased");
-		#else
-		return false;
-		#end
-	}
-
-	private function checkMobileControl(id:MobileInputID, action:String):Bool {
-		#if TOUCH_CONTROLS
-		var state = MusicBeatState.getState();
-		var substate = MusicBeatSubstate.instance;
-		var results:Array<Bool> = [];
-
-		if (state != null) {
-			if (state.touchPad != null) {
-				results.push(callTouchPadAction(state.touchPad, id, action));
-			}
-			if (state.hitbox != null) {
-				results.push(callHitboxAction(state.hitbox.instance, id, action));
-			}
+			if (state.hitbox != null)
+				bools[1] = state.hitbox.instance.buttonJustPressed(id);
 		}
 
-		if (substate != null) {
-			if (substate.touchPad != null) {
-				results.push(callTouchPadAction(substate.touchPad, id, action));
-			}
-			if (substate.hitbox != null) {
-				results.push(callHitboxAction(substate.hitbox.instance, id, action));
-			}
+		if (substate != null)
+		{
+			if (substate.touchPad != null)
+				bools[2] = substate.touchPad.buttonJustPressed(id);
+
+			if (substate.hitbox != null)
+				bools[3] = substate.hitbox.instance.buttonJustPressed(id);
+		}	
+
+		return bools.contains(true);
+	}
+
+	public function mobileControlsJustReleased(id:MobileInputID):Bool
+	{
+		final state:MusicBeatState = MusicBeatState.getState();
+		final substate:MusicBeatSubstate = MusicBeatSubstate.instance;
+		var bools:Array<Bool> = [false, false, false, false];
+
+		if (state != null)
+		{
+			if (state.touchPad != null)
+				bools[0] = state.touchPad.buttonJustReleased(id);
+
+			if (state.hitbox != null)
+				bools[1] = state.hitbox.instance.buttonJustReleased(id);
 		}
 
-		return results.indexOf(true) != -1;
-		#else
-		return false;
-		#end
+		if (substate != null)
+		{
+			if (substate.touchPad != null)
+				bools[2] = substate.touchPad.buttonJustReleased(id);
+
+			if (substate.hitbox != null)
+				bools[3] = substate.hitbox.instance.buttonJustReleased(id);
+		}	
+
+		return bools.contains(true);
 	}
+
+	public function mobileControlsPressed(id:MobileInputID):Bool
+	{
+		final state:MusicBeatState = MusicBeatState.getState();
+		final substate:MusicBeatSubstate = MusicBeatSubstate.instance;
+		var bools:Array<Bool> = [false, false, false, false];
+
+		if (state != null)
+		{
+			if (state.touchPad != null)
+				bools[0] = state.touchPad.buttonPressed(id);
+
+			if (state.hitbox != null)
+				bools[1] = state.hitbox.instance.buttonPressed(id);
+		}
+
+		if (substate != null)
+		{
+			if (substate.touchPad != null)
+				bools[2] = substate.touchPad.buttonPressed(id);
+
+			if (substate.hitbox != null)
+				bools[3] = substate.hitbox.instance.buttonPressed(id);
+		}	
+
+		return bools.contains(true);
+	}
+
+	public function mobileControlsReleased(id:MobileInputID):Bool
+	{
+		final state:MusicBeatState = MusicBeatState.getState();
+		final substate:MusicBeatSubstate = MusicBeatSubstate.instance;
+		var bools:Array<Bool> = [false, false, false, false];
+
+		if (state != null)
+		{
+			if (state.touchPad != null)
+				bools[0] = state.touchPad.buttonReleased(id);
+
+			if (state.hitbox != null)
+				bools[1] = state.hitbox.instance.buttonReleased(id);
+		}
+
+		if (substate != null)
+		{
+			if (substate.touchPad != null)
+				bools[2] = substate.touchPad.buttonReleased(id);
+
+			if (substate.hitbox != null)
+				bools[3] = substate.hitbox.instance.buttonReleased(id);
+		}	
+
+		return bools.contains(true);
+	}
+	#end
 }

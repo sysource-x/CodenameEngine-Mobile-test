@@ -3,8 +3,8 @@
 	<!-- _________________________ Application Settings _________________________ -->
 	<app
 		title="Friday Night Funkin' - Codename Engine" main="funkin.backend.system.Main"
-		file="CodenameEngine" packageName="com.yoshman29.codenameenginee"
-		package="com.yoshman29.codenameenginee"
+		file="CodenameEngine" packageName="com.yoshman29.codenameengine"
+		package="com.yoshman29.codenameengine"
 		version="0.1.0" company="Yoshman29" />
 
 	<!--
@@ -88,7 +88,7 @@
 	<icon path="art/icon16.png" size='16'/>
 	<icon path="art/icon32.png" size='32'/>
 	<icon path="art/icon64.png" size='64'/>
-	<icon path="art/iconOG.png" />
+	<!--<icon path="art/iconOG.png" /> -->
   	<icon path="art/iconOG.png" if="mobile" />
 
 	<!-- _________________________________ Engine Settings _______________________________ -->
@@ -204,6 +204,4 @@
 	<haxedef name="HXCPP_CATCH_SEGV" />
 
 	<haxedef name="hscriptPos" /> <!-- for logging -->
-
-	<haxelib name="lime" />
 </project>

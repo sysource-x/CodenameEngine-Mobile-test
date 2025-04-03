@@ -5,7 +5,7 @@ import openfl.display.ShaderParameter;
 import openfl.utils.ByteArrayData;
 
 class FunkinShader extends Shader {
-    public var glslVer:String = #if lime_opengles "100" #else "120" #end;
+    public var glslVer:String = #if mobile "100" #else "120" #end;
 
     /**
      * Constructor for FunkinShader.
@@ -13,7 +13,7 @@ class FunkinShader extends Shader {
      * @param vert Vertex shader code.
      * @param glslVer Version of GLSL to use (defaults to 120 for OpenGL, 100 for OpenGL ES).
      */
-    public override function new(frag:String, vert:String, glslVer:String = #if lime_opengles "100" #else "120" #end) {
+    public override function new(frag:String, vert:String, glslVer:String = #if mobile"100" #else "120" #end) {
         super();
 		/*
 		Create a shader here:
