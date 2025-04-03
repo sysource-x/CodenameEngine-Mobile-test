@@ -1,11 +1,11 @@
-name: Android Build
+name: Android Build1
 on:
   push:
   workflow_dispatch:
   workflow_call:
 jobs:
   build:
-    name: Android Build
+    name: Android Build1
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
@@ -47,7 +47,7 @@ jobs:
           haxelib run lime config JAVA_HOME $JAVA_HOME_17_X64
           haxelib run lime config ANDROID_SETUP true
       - name: Building the game
-        run: haxelib run lime build android
+        run: haxelib run lime build android -final
       - name: Uploading artifact
         uses: actions/upload-artifact@v4
         with:
