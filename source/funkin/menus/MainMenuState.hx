@@ -17,183 +17,197 @@ using StringTools;
 
 class MainMenuState extends MusicBeatState
 {
-	var curSelected:Int = 0;
+    var curSelected:Int = 0;
 
-	var menuItems:FlxTypedGroup<FlxSprite>;
+    var menuItems:FlxTypedGroup<FlxSprite>;
 
-	var optionShit:Array<String> = CoolUtil.coolTextFile(Paths.txt("config/menuItems"));
+    // Carregar lista de itens do menu do diretório interno
+    var optionShit:Array<String> = CoolUtil.coolTextFile("assets/config/menuItems.txt");
 
-	var bg:FlxSprite;
-	var magenta:FlxSprite;
-	var camFollow:FlxObject;
-	var versionText:FunkinText;
+    var bg:FlxSprite;
+    var magenta:FlxSprite;
+    var camFollow:FlxObject;
+    var versionText:FunkinText;
 
-	public var canAccessDebugMenus:Bool = true;
+    public var canAccessDebugMenus:Bool = true;
 
-	override function create()
-	{
-		super.create();
+    override function create()
+    {
+        super.create();
 
-		DiscordUtil.call("onMenuLoaded", ["Main Menu"]);
+        DiscordUtil.call("onMenuLoaded", ["Main Menu"]);
 
-		CoolUtil.playMenuSong();
+        // Carregar música do menu do diretório interno
+        CoolUtil.playMenuSong("assets/music/freakyMenu.ogg");
 
-		bg = new FlxSprite(-80).loadAnimatedGraphic(Paths.image('menus/menuBG'));
-		add(bg);
+        // Carregar fundo do diretório interno
+        bg = new FlxSprite(-80).loadAnimatedGraphic("assets/images/menus/menuBG.png");
+        add(bg);
 
-		camFollow = new FlxObject(0, 0, 1, 1);
-		add(camFollow);
+        camFollow = new FlxObject(0, 0, 1, 1);
+        add(camFollow);
 
-		magenta = new FlxSprite(-80).loadAnimatedGraphic(Paths.image('menus/menuDesat'));
-		magenta.visible = false;
-		magenta.color = 0xFFfd719b;
-		add(magenta);
+        magenta = new FlxSprite(-80).loadAnimatedGraphic("assets/images/menus/menuDesat.png");
+        magenta.visible = false;
+        magenta.color = 0xFFfd719b;
+        add(magenta);
 
-		for(bg in [bg, magenta]) {
-			bg.scrollFactor.set(0, 0.18);
-			bg.scale.set(1.15, 1.15);
-			bg.updateHitbox();
-			bg.screenCenter();
-			bg.antialiasing = true;
-		}
+        for(bg in [bg, magenta]) {
+            bg.scrollFactor.set(0, 0.18);
+            bg.scale.set(1.15, 1.15);
+            bg.updateHitbox();
+            bg.screenCenter();
+            bg.antialiasing = true;
+        }
 
-		menuItems = new FlxTypedGroup<FlxSprite>();
-		add(menuItems);
+        menuItems = new FlxTypedGroup<FlxSprite>();
+        add(menuItems);
 
-		for (i=>option in optionShit)
-		{
-			var menuItem:FlxSprite = new FlxSprite(0, 60 + (i * 160));
-			menuItem.frames = Paths.getFrames('menus/mainmenu/${option}');
-			menuItem.animation.addByPrefix('idle', option + " basic", 24);
-			menuItem.animation.addByPrefix('selected', option + " white", 24);
-			menuItem.animation.play('idle');
-			menuItem.ID = i;
-			menuItem.screenCenter(X);
-			menuItems.add(menuItem);
-			menuItem.scrollFactor.set();
-			menuItem.antialiasing = true;
-		}
+        // Carregar animações dos itens do menu do diretório interno
+        for (i => option in optionShit)
+        {
+            var menuItem:FlxSprite = new FlxSprite(0, 60 + (i * 160));
+            menuItem.frames = FlxAtlasFrames.fromSparrow("assets/images/menus/mainmenu/" + option + ".png", "assets/images/menus/mainmenu/" + option + ".xml");
+            menuItem.animation.addByPrefix('idle', option + " basic", 24);
+            menuItem.animation.addByPrefix('selected', option + " white", 24);
+            menuItem.animation.play('idle');
+            menuItem.ID = i;
+            menuItem.screenCenter(X);
+            menuItems.add(menuItem);
+            menuItem.scrollFactor.set();
+            menuItem.antialiasing = true;
+        }
 
-		FlxG.camera.follow(camFollow, null, 0.06);
+        FlxG.camera.follow(camFollow, null, 0.06);
+        var modsKey:String = controls.touchC ? "M" : controls.getKeyName(SWITCHMOD);
 
-		versionText = new FunkinText(5, FlxG.height - 2, 0, 'Codename Engine v${Application.current.meta.get('version')}\nCommit ${funkin.backend.system.macros.GitCommitMacro.commitNumber} (${funkin.backend.system.macros.GitCommitMacro.commitHash})\n[${controls.getKeyName(SWITCHMOD)}] Open Mods menu\n');
-		versionText.y -= versionText.height;
-		versionText.scrollFactor.set();
-		add(versionText);
+        // Exibir versão do jogo
+        versionText = new FunkinText(5, FlxG.height - 2, 0, 'Codename Engine v${Application.current.meta.get('version')}\nCommit ${funkin.backend.system.macros.GitCommitMacro.commitNumber} (${funkin.backend.system.macros.GitCommitMacro.commitHash})\n[$modsKey] Open Mods menu\n');
+        versionText.y -= versionText.height;
+        versionText.scrollFactor.set();
+        add(versionText);
 
-		changeItem();
-	}
+        changeItem();
 
-	var selectedSomethin:Bool = false;
-	var forceCenterX:Bool = true;
+        addTouchPad('UP_DOWN', 'A_B_M_E');
+    }
 
-	override function update(elapsed:Float)
-	{
-		if (FlxG.sound.music.volume < 0.8)
-			FlxG.sound.music.volume += 0.5 * elapsed;
+    var selectedSomethin:Bool = false;
+    var forceCenterX:Bool = true;
 
-		if (!selectedSomethin)
-		{
-			if (canAccessDebugMenus) {
-				if (FlxG.keys.justPressed.SEVEN) {
-					persistentUpdate = false;
-					persistentDraw = true;
-					openSubState(new funkin.editors.EditorPicker());
-				}
-				/*
-				if (FlxG.keys.justPressed.SEVEN)
-					FlxG.switchState(new funkin.desktop.DesktopMain());
-				if (FlxG.keys.justPressed.EIGHT) {
-					CoolUtil.safeSaveFile("chart.json", Json.stringify(funkin.backend.chart.Chart.parse("dadbattle", "hard")));
-				}
-				*/
-			}
+    override function update(elapsed:Float)
+    {
+        if (FlxG.sound.music.volume < 0.8)
+            FlxG.sound.music.volume += 0.5 * elapsed;
 
-			var upP = controls.UP_P;
-			var downP = controls.DOWN_P;
-			var scroll = FlxG.mouse.wheel;
+        if (!selectedSomethin)
+        {
+            if (canAccessDebugMenus) {
+                if (FlxG.keys.justPressed.SEVEN #if TOUCH_CONTROLS || touchPad.buttonE.justPressed #end) {
+                    persistentUpdate = false;
+                    persistentDraw = true;
+                    openSubState(new funkin.editors.EditorPicker());
+                }
+                /*
+                if (FlxG.keys.justPressed.SEVEN)
+                    FlxG.switchState(new funkin.desktop.DesktopMain());
+                if (FlxG.keys.justPressed.EIGHT) {
+                    CoolUtil.safeSaveFile("chart.json", Json.stringify(funkin.backend.chart.Chart.parse("dadbattle", "hard")));
+                }
+                */
+            }
 
-			if (upP || downP || scroll != 0)  // like this we wont break mods that expect a 0 change event when calling sometimes  - Nex
-				changeItem((upP ? -1 : 0) + (downP ? 1 : 0) - scroll);
+            var upP = controls.UP_P;
+            var downP = controls.DOWN_P;
+            var scroll = FlxG.mouse.wheel;
 
-			if (controls.BACK)
-				FlxG.switchState(new TitleState());
+            if (upP || downP || scroll != 0)  // like this we wont break mods that expect a 0 change event when calling sometimes  - Nex
+                changeItem((upP ? -1 : 0) + (downP ? 1 : 0) - scroll);
 
-			#if MOD_SUPPORT
-			if (controls.SWITCHMOD) {
-				openSubState(new ModSwitchMenu());
-				persistentUpdate = false;
-				persistentDraw = true;
-			}
-			#end
+            if (controls.BACK)
+                FlxG.switchState(new TitleState());
 
-			if (controls.ACCEPT)
-				selectItem();
-		}
+            #if MOD_SUPPORT
+            if (controls.SWITCHMOD #if TOUCH_CONTROLS || touchPad.buttonM.justPressed #end) {
+                openSubState(new ModSwitchMenu());
+                persistentUpdate = false;
+                persistentDraw = true;
+            }
+            #end
 
-		super.update(elapsed);
+            if (controls.ACCEPT)
+                selectItem();
+        }
 
-		if (forceCenterX)
-		menuItems.forEach(function(spr:FlxSprite)
-		{
-			spr.screenCenter(X);
-		});
-	}
+        super.update(elapsed);
 
-	public override function switchTo(nextState:FlxState):Bool {
-		try {
-			menuItems.forEach(function(spr:FlxSprite) {
-				FlxTween.tween(spr, {alpha: 0}, 0.5, {ease: FlxEase.quintOut});
-			});
-		}
-		return super.switchTo(nextState);
-	}
+        if (forceCenterX)
+        menuItems.forEach(function(spr:FlxSprite)
+        {
+            spr.screenCenter(X);
+        });
+    }
 
-	function selectItem() {
-		selectedSomethin = true;
-		CoolUtil.playMenuSFX(CONFIRM);
+    override function closeSubState() {
+        super.closeSubState();
+        removeTouchPad();
+        addTouchPad('UP_DOWN', 'A_B_M_E');
+    }
 
-		if (Options.flashingMenu) FlxFlicker.flicker(magenta, 1.1, 0.15, false);
+    public override function switchTo(nextState:FlxState):Bool {
+        try {
+            menuItems.forEach(function(spr:FlxSprite) {
+                FlxTween.tween(spr, {alpha: 0}, 0.5, {ease: FlxEase.quintOut});
+            });
+        }
+        return super.switchTo(nextState);
+    }
 
-		FlxFlicker.flicker(menuItems.members[curSelected], 1, Options.flashingMenu ? 0.06 : 0.15, false, false, function(flick:FlxFlicker)
-		{
-			var daChoice:String = optionShit[curSelected];
+    function selectItem() {
+        selectedSomethin = true;
+        CoolUtil.playMenuSFX(CONFIRM);
 
-			var event = event("onSelectItem", EventManager.get(NameEvent).recycle(daChoice));
-			if (event.cancelled) return;
-			switch (event.name)
-			{
-				case 'story mode': FlxG.switchState(new StoryMenuState());
-				case 'freeplay': FlxG.switchState(new FreeplayState());
-				case 'donate', 'credits': FlxG.switchState(new CreditsMain());  // kept donate for not breaking scripts, if you dont want donate to bring you to the credits menu, thats easy softcodable  - Nex
-				case 'options': FlxG.switchState(new OptionsMenu());
-			}
-		});
-	}
-	function changeItem(huh:Int = 0)
-	{
-		var event = event("onChangeItem", EventManager.get(MenuChangeEvent).recycle(curSelected, FlxMath.wrap(curSelected + huh, 0, menuItems.length-1), huh, huh != 0));
-		if (event.cancelled) return;
+        if (Options.flashingMenu) FlxFlicker.flicker(magenta, 1.1, 0.15, false);
 
-		curSelected = event.value;
+        FlxFlicker.flicker(menuItems.members[curSelected], 1, Options.flashingMenu ? 0.06 : 0.15, false, false, function(flick:FlxFlicker)
+        {
+            var daChoice:String = optionShit[curSelected];
 
-		if (event.playMenuSFX)
-			CoolUtil.playMenuSFX(SCROLL, 0.7);
+            var event = event("onSelectItem", EventManager.get(NameEvent).recycle(daChoice));
+            if (event.cancelled) return;
+            switch (event.name)
+            {
+                case 'story mode': FlxG.switchState(new StoryMenuState());
+                case 'freeplay': FlxG.switchState(new FreeplayState());
+                case 'donate', 'credits': FlxG.switchState(new CreditsMain());  // kept donate for not breaking scripts, if you dont want donate to bring you to the credits menu, thats easy softcodable  - Nex
+                case 'options': FlxG.switchState(new OptionsMenu());
+            }
+        });
+    }
+    function changeItem(huh:Int = 0)
+    {
+        var event = event("onChangeItem", EventManager.get(MenuChangeEvent).recycle(curSelected, FlxMath.wrap(curSelected + huh, 0, menuItems.length-1), huh, huh != 0));
+        if (event.cancelled) return;
 
-		menuItems.forEach(function(spr:FlxSprite)
-		{
-			spr.animation.play('idle');
+        curSelected = event.value;
 
-			if (spr.ID == curSelected)
-			{
-				spr.animation.play('selected');
-				var mid = spr.getGraphicMidpoint();
-				camFollow.setPosition(mid.x, mid.y);
-				mid.put();
-			}
+        if (event.playMenuSFX)
+            CoolUtil.playMenuSFX(SCROLL, 0.7);
 
-			spr.updateHitbox();
-			spr.centerOffsets();
-		});
-	}
+        menuItems.forEach(function(spr:FlxSprite)
+        {
+            spr.animation.play('idle');
+
+            if (spr.ID == curSelected)
+            {
+                spr.animation.play('selected');
+                var mid = spr.getGraphicMidpoint();
+                camFollow.setPosition(mid.x, mid.y);
+                mid.put();
+            }
+
+            spr.updateHitbox();
+            spr.centerOffsets();
+        });
+    }
 }

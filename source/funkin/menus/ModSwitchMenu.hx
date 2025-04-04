@@ -2,66 +2,97 @@ package funkin.menus;
 
 #if MOD_SUPPORT
 import haxe.io.Path;
-import funkin.backend.assets.ModsFolder;
-import sys.FileSystem;
+import lime.utils.Assets;
 import flixel.tweens.FlxTween;
 
 class ModSwitchMenu extends MusicBeatSubstate {
-	var mods:Array<String> = [];
-	var alphabets:FlxTypedGroup<Alphabet>;
-	var curSelected:Int = 0;
+    var mods:Array<String> = [];
+    var alphabets:FlxTypedGroup<Alphabet>;
+    var curSelected:Int = 0;
 
-	public override function create() {
-		super.create();
+    public override function create() {
+        super.create();
 
-		var bg = new FlxSprite(0, 0).makeSolid(FlxG.width, FlxG.height, 0xFF000000);
-		bg.updateHitbox();
-		bg.scrollFactor.set();
-		add(bg);
+        var bg = new FlxSprite(0, 0).makeSolid(FlxG.width, FlxG.height, 0xFF000000);
+        bg.updateHitbox();
+        bg.scrollFactor.set();
+        add(bg);
 
-		bg.alpha = 0;
-		FlxTween.tween(bg, {alpha: 0.5}, 0.25, {ease: FlxEase.cubeOut});
+        bg.alpha = 0;
+        FlxTween.tween(bg, {alpha: 0.5}, 0.25, {ease: FlxEase.cubeOut});
 
-		mods = ModsFolder.getModsList();
-		mods.push(null);
+        // Carregar lista de mods do diretório interno
+        mods = getModsList();
+        mods.push(null); // Adicionar opção para desativar mods
 
-		alphabets = new FlxTypedGroup<Alphabet>();
-		for(mod in mods) {
-			var a = new Alphabet(0, 0, mod == null ? "DISABLE MODS" : mod, true);
-			a.isMenuItem = true;
-			a.scrollFactor.set();
-			alphabets.add(a);
-		}
-		add(alphabets);
-		changeSelection(0, true);
-	}
+        alphabets = new FlxTypedGroup<Alphabet>();
+        for (mod in mods) {
+            var a = new Alphabet(0, 0, mod == null ? "DISABLE MODS" : mod, true);
+            a.isMenuItem = true;
+            a.scrollFactor.set();
+            alphabets.add(a);
+        }
+        add(alphabets);
+        changeSelection(0, true);
 
-	public override function update(elapsed:Float) {
-		super.update(elapsed);
+        addTouchPad('UP_DOWN', 'A_B');
+        addTouchPadCamera(); // dawg wtf
+    }
 
-		changeSelection((controls.DOWN_P ? 1 : 0) + (controls.UP_P ? -1 : 0) - FlxG.mouse.wheel);
+    public override function update(elapsed:Float) {
+        super.update(elapsed);
 
-		if (controls.ACCEPT) {
-			ModsFolder.switchMod(mods[curSelected]);
-			close();
-		}
+        changeSelection((controls.DOWN_P ? 1 : 0) + (controls.UP_P ? -1 : 0) - FlxG.mouse.wheel);
 
-		if (controls.BACK)
-			close();
-	}
+        if (controls.ACCEPT) {
+            switchMod(mods[curSelected]);
+            close();
+        }
 
-	public function changeSelection(change:Int, force:Bool = false) {
-		if (change == 0 && !force) return;
+        if (controls.BACK)
+            close();
+    }
 
-		curSelected = FlxMath.wrap(curSelected + change, 0, alphabets.length-1);
+    public function changeSelection(change:Int, force:Bool = false) {
+        if (change == 0 && !force) return;
 
-		CoolUtil.playMenuSFX(SCROLL, 0.7);
+        curSelected = FlxMath.wrap(curSelected + change, 0, alphabets.length - 1);
 
-		for(k=>alphabet in alphabets.members) {
-			alphabet.alpha = 0.6;
-			alphabet.targetY = k - curSelected;
-		}
-		alphabets.members[curSelected].alpha = 1;
-	}
+        CoolUtil.playMenuSFX(SCROLL, 0.7);
+
+        for (k => alphabet in alphabets.members) {
+            alphabet.alpha = 0.6;
+            alphabet.targetY = k - curSelected;
+        }
+        alphabets.members[curSelected].alpha = 1;
+    }
+
+    // Função para carregar a lista de mods do diretório interno
+    private function getModsList():Array<String> {
+        var mods:Array<String> = [];
+        var modsPath = "assets/mods/";
+
+        // Verificar se o diretório de mods existe
+        if (Assets.exists(modsPath)) {
+            for (file in Assets.list(modsPath)) {
+                if (file.endsWith(".mod")) { // Supondo que os mods tenham a extensão .mod
+                    mods.push(Path.withoutExtension(file));
+                }
+            }
+        }
+
+        return mods;
+    }
+
+    // Função para alternar mods
+    private function switchMod(mod:String):Void {
+        if (mod == null) {
+            trace("Mods desativados.");
+            // Lógica para desativar mods
+        } else {
+            trace("Mod ativado: " + mod);
+            // Lógica para ativar o mod selecionado
+        }
+    }
 }
 #end

@@ -552,6 +552,7 @@ class PlayState extends MusicBeatState
 
 	@:dox(hide) override public function create()
 	{
+		#if mobile lime.system.System.allowScreenTimeout = false; #end
 		Note.__customNoteTypeExists = [];
 		// SCRIPTING & DATA INITIALIZATION
 		#if REGION
@@ -734,7 +735,8 @@ class PlayState extends MusicBeatState
 
 		FlxG.worldBounds.set(0, 0, FlxG.width, FlxG.height);
 
-		healthBarBG = new FlxSprite(0, FlxG.height * 0.9).loadAnimatedGraphic(Paths.image('game/healthBar'));
+		// Carregar gráficos do diretório interno
+		healthBarBG = new FlxSprite(0, FlxG.height * 0.9).loadAnimatedGraphic("assets/images/game/healthBar.png");
 		healthBarBG.screenCenter(X);
 		healthBarBG.scrollFactor.set();
 		add(healthBarBG);
@@ -749,8 +751,9 @@ class PlayState extends MusicBeatState
 
 		health = maxHealth / 2;
 
-		iconP1 = new HealthIcon(boyfriend != null ? boyfriend.getIcon() : "face", true);
-		iconP2 = new HealthIcon(dad != null ? dad.getIcon() : "face", false);
+		// Carregar ícones do diretório interno
+		iconP1 = new HealthIcon("assets/images/icons/" + (boyfriend != null ? boyfriend.getIcon() : "face") + ".png", true);
+		iconP2 = new HealthIcon("assets/images/icons/" + (dad != null ? dad.getIcon() : "face") + ".png", false);
 		for(icon in [iconP1, iconP2]) {
 			icon.y = healthBar.y - (icon.height / 2);
 			add(icon);
@@ -775,6 +778,14 @@ class PlayState extends MusicBeatState
 		#end
 
 		startingSong = true;
+		addHitbox();
+		#if TOUCH_CONTROLS
+		hitbox.visible = true;
+		#end
+		#if !android
+		addTouchPad('NONE', 'P');
+		addTouchPadCamera();
+		#end
 
 		super.create();
 
@@ -974,6 +985,7 @@ class PlayState extends MusicBeatState
 
 	public override function destroy() {
 		scripts.call("destroy");
+		#if mobile lime.system.System.allowScreenTimeout = Options.screenTimeOut; #end
 		for(g in __cachedGraphics)
 			g.useCount--;
 		@:privateAccess
@@ -1004,14 +1016,6 @@ class PlayState extends MusicBeatState
 		if (songData == null) songData = SONG;
 
 		events = songData.events != null ? [for(e in songData.events) e] : [];
-		// get first camera focus
-		for(e in events) {
-			if (e.time > 10) break;
-			if (e.name == "Camera Movement") {
-				executeEvent(e);
-				break;
-			}
-		}
 		events.sort(function(p1, p2) {
 			return FlxSort.byValues(FlxSort.DESCENDING, p1.time, p2.time);
 		});
@@ -1022,9 +1026,10 @@ class PlayState extends MusicBeatState
 
 		curSong = songData.meta.name.toLowerCase();
 
-		inst = FlxG.sound.load(Paths.inst(SONG.meta.name, difficulty));
-		if (SONG.meta.needsVoices != false) // null or true
-			vocals = FlxG.sound.load(Paths.voices(SONG.meta.name, difficulty));
+		// Carregar músicas do diretório interno
+		inst = FlxG.sound.load("assets/music/" + SONG.meta.name + "-inst.ogg");
+		if (SONG.meta.needsVoices != false) // null ou true
+			vocals = FlxG.sound.load("assets/music/" + SONG.meta.name + "-voices.ogg");
 		else
 			vocals = new FlxSound();
 		inst.group = FlxG.sound.defaultMusicGroup;
@@ -1048,6 +1053,8 @@ class PlayState extends MusicBeatState
 	override function openSubState(SubState:FlxSubState)
 	{
 		var event = scripts.event("onSubstateOpen", EventManager.get(StateEvent).recycle(SubState));
+
+		#if mobile lime.system.System.allowScreenTimeout = Options.screenTimeOut; #end
 
 		if (!postCreated)
 			MusicBeatState.skipTransIn = true;
@@ -1074,6 +1081,7 @@ class PlayState extends MusicBeatState
 	override function closeSubState()
 	{
 		var event = scripts.event("onSubstateClose", EventManager.get(StateEvent).recycle(subState));
+		#if mobile lime.system.System.allowScreenTimeout = false; #end
 		if (event.cancelled) return;
 
 		if (paused)
@@ -1256,7 +1264,7 @@ class PlayState extends MusicBeatState
 
 		updateRatingStuff();
 
-		if (controls.PAUSE && startedCountdown && canPause)
+		if (#if android FlxG.android.justReleased.BACK || #end controls.PAUSE && startedCountdown && canPause)
 			pauseGame();
 
 		if (canAccessDebugMenus) {
@@ -1479,6 +1487,9 @@ class PlayState extends MusicBeatState
 	 */
 	public function endSong():Void
 	{
+		#if TOUCH_CONTROLS
+		hitbox.visible = false;
+		#end
 		scripts.call("onSongEnd");
 		canPause = false;
 		inst.volume = 0;
@@ -1520,6 +1531,9 @@ class PlayState extends MusicBeatState
 	 * Immediately switches to the next song, or goes back to the Story/Freeplay menu.
 	 */
 	public function nextSong() {
+		#if TOUCH_CONTROLS
+		hitbox.visible = false;
+		#end
 		if (isStoryMode)
 		{
 			campaignScore += songScore;
