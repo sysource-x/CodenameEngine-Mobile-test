@@ -1,0 +1,5 @@
+-cp src
+-cp base/src
+-neko ../run.n
+-main Main
+-D target_java

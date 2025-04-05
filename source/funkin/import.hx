@@ -1,3 +1,5 @@
+package funkin;
+
 #if !macro
 import funkin.backend.system.Main;
 import funkin.backend.assets.Paths;

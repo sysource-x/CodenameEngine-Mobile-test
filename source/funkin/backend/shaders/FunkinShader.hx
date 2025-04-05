@@ -2,7 +2,7 @@ package funkin.backend.shaders;
 
 import openfl.display.Shader;
 import openfl.display.ShaderParameter;
-import openfl.utils.ByteArrayData;
+import haxe.io.Bytes;
 
 class FunkinShader extends Shader {
     public var glslVer:String = #if mobile "100" #else "120" #end;
@@ -64,7 +64,7 @@ class FunkinShader extends Shader {
      * @param vertCode Vertex shader code.
      * @return Compiled shader program.
      */
-    private function compileShader(fragCode:String, vertCode:String):ByteArrayData {
+    private function compileShader(fragCode:String, vertCode:String):Bytes {
         #if (js && html5)
         // Add precision for WebGL
         fragCode = "precision mediump float;\n" + fragCode;
@@ -72,8 +72,7 @@ class FunkinShader extends Shader {
         #end
 
         // Compile the shader program
-        var shaderData:ByteArrayData = new ByteArrayData();
-        shaderData.writeUTFBytes(fragCode + "\n" + vertCode);
+        var shaderData:Bytes = Bytes.ofString(fragCode + "\n" + vertCode);
         return shaderData;
     }
 }

@@ -23,6 +23,9 @@ import sys.thread.Thread;
 
 class Main extends Sprite
 {
+	public static function main() {
+        //trace("Hello, Haxe!");
+    }
     public static final releaseCycle:String = "Beta";
 
     public static var instance:Main;

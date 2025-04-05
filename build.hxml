@@ -1,5 +1,12 @@
--main Main
--cp src
+-main funkin.backend.system.Main
+-cp source
 -lib lime
+-lib lime-samples
+-lib flixel
+-lib flixel-addons
+-lib openfl
+-lib openfl-samples
+-lib hscript-improved
+-lib haxe
 -dce full
 -cpp build/cpp
