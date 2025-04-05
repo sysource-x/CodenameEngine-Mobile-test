@@ -1,5 +1,0 @@
--m Main
--D jvm
---java ./out
-
---java-lib asm-7.1.jar

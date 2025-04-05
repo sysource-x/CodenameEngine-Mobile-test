@@ -5,8 +5,8 @@ import funkin.backend.system.Logs;
 import lime.system.System;
 
 #if android
-import android.os.Build;
-import android.os.Build.VERSION;
+//import android.os.Build;
+//import android.os.Build.VERSION;
 #end
 
 class SystemInfo extends FramerateCategory {
