@@ -1,0 +1,5 @@
+-main Main
+-cp src
+-lib lime
+-dce full
+-cpp build/cpp

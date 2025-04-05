@@ -89,7 +89,7 @@ In the future (when the engine won't be a WIP anymore) we're gonna also publish 
 </details>
 
 <details>
-  <summary><h2>Mobile Credits</h2></summary>
+  <summary><h2>Mobile Controls Credits</h2></summary>
 
 - Credits to [Homura](ttps://youtube.com/@HomuHomu833) to porting the engine
 - Credits to [Karim Akra](https://youtube.com/@Karim0690) to helping on the port
@@ -97,5 +97,5 @@ In the future (when the engine won't be a WIP anymore) we're gonna also publish 
 
 <details>
   <summary><h2>Port Credits</h2></summary>
-- Credits to [sysource_xyz](htpps://youtube.com/@sysource_xyz) to port apk without external storage
+- Credits to [sysource_xyz](htpps://youtube.com/@sysource_xyz) to port apk without external storage and changing controls
 </details>

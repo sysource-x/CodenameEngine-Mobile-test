@@ -1,4 +1,4 @@
-package funkin.backend.graphics;
+package funkin.backend.shaders;
 
 import openfl.display.Shader;
 import openfl.display.ShaderParameter;

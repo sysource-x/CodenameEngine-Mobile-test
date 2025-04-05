@@ -21,4 +21,8 @@
 	<lib name="format" />
 	<lib name="markdown" />
 	<lib name="nape-haxe4" />
+<!-- lime(don't is the lime of the url is the original lime with the version 8.2.2)-
+,openfl, flixel, flixel-addons, flxanimate, hxdiscord_rpc,-
+hxvlc(version most recent is 2.0.1 but as installed the 1.9.3),-
+hxcpp, away3d, format, markdown and nape-haxe4 are installed for this build -->
 </libraries>

@@ -1,5 +1,8 @@
 name: Android Build
-on: workflow_dispatch
+on: 
+  push:
+  workflow_dispatch:
+  workflow_call:
 jobs:
   build:
     name: Android Build
@@ -22,7 +25,7 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '18'
-      - name: Configurar o Android SDK
+      - name: Android SDK
         uses: android-actions/setup-android@v2
         with:
           api-level: 30
